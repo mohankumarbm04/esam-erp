@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_URL =
   process.env.NODE_ENV === "production"
-    ? "https://esam-erp.onrender.com/api" // Your live backend
+    ? "https://esam-erp.onrender.com/api"
     : "http://localhost:5000/api";
 
 const api = axios.create({
@@ -13,4 +13,28 @@ const api = axios.create({
   },
 });
 
-// Rest of your code...
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
+    return Promise.reject(error);
+  },
+);
+
+export default api; // ✅ THIS IS CRITICAL
