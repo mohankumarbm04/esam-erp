@@ -1,10 +1,6 @@
 // pages/student/MyMarks.jsx
 import React, { useState } from "react";
-import {
-  ChartBarIcon,
-  AcademicCapIcon,
-  CheckCircleIcon,
-} from "@heroicons/react/24/outline";
+import { ChartBarIcon } from "@heroicons/react/24/outline";
 
 const MyMarks = () => {
   const [selectedSem, setSelectedSem] = useState("3");
