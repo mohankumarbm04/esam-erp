@@ -1,0 +1,37 @@
+{
+  "name": "esam-erp",
+  "version": "1.0.0",
+  "description": "Engineering Student Academic Monitoring & ERP System",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "backend": "nodemon backend/server.js",
+    "frontend": "cd frontend && npm start",
+    "dev-full": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "keywords": [
+    "erp",
+    "education",
+    "engineering",
+    "student"
+  ],
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.4"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.14"
+  },
+  "engines": {
+    "node": "18.x",
+    "npm": "9.x"
+  }
+}
