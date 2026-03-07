@@ -36,7 +36,7 @@ app.use("/api/students", require("./routes/students"));
 app.use("/api/subjects", require("./routes/subjects"));
 app.use("/api/attendance", require("./routes/attendance"));
 app.use("/api/marks", require("./routes/marks"));
-
+app.use("/api/hod", require("./routes/hod"));
 // MongoDB Connection
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/esam-erp";

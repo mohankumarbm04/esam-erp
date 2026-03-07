@@ -8,18 +8,29 @@ import {
   AcademicCapIcon,
   UserGroupIcon,
   ChartBarIcon,
-  CalendarIcon,
+  EyeIcon,
+  PrinterIcon,
+  ShareIcon,
+  FunnelIcon,
 } from "@heroicons/react/24/outline";
 
 const Reports = () => {
-  const [students, setStudents] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [reportType, setReportType] = useState("transcript");
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedSem, setSelectedSem] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
-  const [reportType, setReportType] = useState("transcript");
-  const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState("pdf");
+  const [recentReports, setRecentReports] = useState([]);
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalSubjects: 0,
+    passPercentage: 0,
+  });
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -27,7 +38,9 @@ const Reports = () => {
   useEffect(() => {
     fetchDepartments();
     fetchStudents();
-  }, []);
+    fetchStats();
+    fetchRecentReports();
+  }, []); // ✅ Fixed: Dependencies are fine - functions defined inside component
 
   const fetchDepartments = async () => {
     try {
@@ -51,7 +64,140 @@ const Reports = () => {
       setStudents(response.data.students || []);
     } catch (error) {
       console.error("Error fetching students:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const fetchStats = async () => {
+    try {
+      // This would come from your API
+      setStats({
+        totalStudents: 450,
+        totalTeachers: 45,
+        totalSubjects: 120,
+        passPercentage: 87.5,
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  };
+
+  const fetchRecentReports = async () => {
+    // Mock data - replace with API call
+    setRecentReports([
+      {
+        id: 1,
+        title: "Attendance Report - Semester 3",
+        type: "Attendance",
+        date: "March 2026",
+        size: "245 KB",
+        format: "PDF",
+        generatedBy: "Admin",
+        generatedOn: "2 hours ago",
+        url: "#",
+      },
+      {
+        id: 2,
+        title: "Student List - CSE Department",
+        type: "Student List",
+        date: "March 2026",
+        size: "189 KB",
+        format: "PDF",
+        generatedBy: "Admin",
+        generatedOn: "Yesterday",
+        url: "#",
+      },
+      {
+        id: 3,
+        title: "Marks Statement - Semester 3",
+        type: "Marks",
+        date: "March 2026",
+        size: "423 KB",
+        format: "PDF",
+        generatedBy: "Admin",
+        generatedOn: "2 days ago",
+        url: "#",
+      },
+      {
+        id: 4,
+        title: "Low Attendance Report",
+        type: "Alert",
+        date: "March 2026",
+        size: "156 KB",
+        format: "PDF",
+        generatedBy: "System",
+        generatedOn: "3 days ago",
+        url: "#",
+      },
+    ]);
+  };
+
+  const handleGenerateReport = () => {
+    setGenerating(true);
+
+    // Simulate report generation
+    setTimeout(() => {
+      setGenerating(false);
+      alert(`${getReportTitle()} generated successfully!`);
+
+      // Add to recent reports
+      const newReport = {
+        id: Date.now(),
+        title: `${getReportTitle()} - ${new Date().toLocaleDateString()}`,
+        type:
+          reportType === "attendance"
+            ? "Attendance"
+            : reportType === "student-list"
+              ? "Student List"
+              : reportType === "marks"
+                ? "Marks"
+                : "Department",
+        date: new Date().toLocaleDateString(),
+        size: "~250 KB",
+        format: selectedFormat.toUpperCase(),
+        generatedBy: "You",
+        generatedOn: "Just now",
+        url: "#",
+      };
+
+      setRecentReports([newReport, ...recentReports]);
+    }, 2000);
+  };
+
+  const getReportTitle = () => {
+    switch (reportType) {
+      case "attendance":
+        return "Attendance Report";
+      case "student-list":
+        return "Student List";
+      case "marks":
+        return "Marks Statement";
+      case "department":
+        return "Department Summary";
+      case "transcript":
+        return "Student Transcript";
+      case "low-attendance":
+        return "Low Attendance Report";
+      default:
+        return "Report";
+    }
+  };
+
+  const handleDownload = (report) => {
+    alert(`Downloading ${report.title}...`);
+  };
+
+  const handlePreview = (report) => {
+    alert(`Previewing ${report.title}...`);
+  };
+
+  const handlePrint = (report) => {
+    alert(`Printing ${report.title}...`);
+  };
+
+  const handleShare = (report) => {
+    alert(`Share options for ${report.title}...`);
   };
 
   const getSemesterOptions = () => {
@@ -62,20 +208,23 @@ const Reports = () => {
     ));
   };
 
-  const handleGenerateReport = async () => {
-    setGenerating(true);
-
-    // Simulate report generation
-    setTimeout(() => {
-      setGenerating(false);
-      alert(`Report generated successfully! Check your downloads folder.`);
-    }, 2000);
+  const getFilteredStudents = () => {
+    if (!selectedDept && !selectedSem) return students;
+    return students.filter((student) => {
+      const deptMatch =
+        !selectedDept || student.departmentId?._id === selectedDept;
+      const semMatch =
+        !selectedSem || student.semester === parseInt(selectedSem);
+      return deptMatch && semMatch;
+    });
   };
 
-  const ReportCard = ({ title, icon: Icon, color, description, onClick }) => (
+  const ReportTypeCard = ({ title, icon: Icon, color, description, type }) => (
     <div
-      onClick={onClick}
-      className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-blue-500"
+      onClick={() => setReportType(type)}
+      className={`bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition cursor-pointer border-2 ${
+        reportType === type ? "border-blue-500" : "border-transparent"
+      }`}
     >
       <div className="flex items-center mb-4">
         <div className={`p-3 rounded-full ${color} mr-4`}>
@@ -83,14 +232,20 @@ const Reports = () => {
         </div>
         <h3 className="text-lg font-semibold">{title}</h3>
       </div>
-      <p className="text-gray-600 text-sm">{description}</p>
-      <div className="mt-4 flex justify-end">
-        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
-          Generate <ArrowDownTrayIcon className="h-4 w-4 ml-1" />
-        </button>
+      <p className="text-gray-600 text-sm mb-4">{description}</p>
+      <div className="flex justify-end">
+        <span className="text-xs text-gray-500">Click to select</span>
       </div>
     </div>
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading reports...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -104,55 +259,80 @@ const Reports = () => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm text-gray-600">Total Students</p>
+            <p className="text-2xl font-bold">{stats.totalStudents}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm text-gray-600">Total Teachers</p>
+            <p className="text-2xl font-bold">{stats.totalTeachers}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm text-gray-600">Total Subjects</p>
+            <p className="text-2xl font-bold">{stats.totalSubjects}</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <p className="text-sm text-gray-600">Pass Percentage</p>
+            <p className="text-2xl font-bold text-green-600">
+              {stats.passPercentage}%
+            </p>
+          </div>
+        </div>
+
         {/* Report Types Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <ReportCard
+          <ReportTypeCard
             title="Student Transcript"
             icon={AcademicCapIcon}
             color="bg-blue-500"
             description="Complete academic record with all semesters, SGPA, and CGPA"
-            onClick={() => setReportType("transcript")}
+            type="transcript"
           />
-          <ReportCard
-            title="Class Report"
-            icon={UserGroupIcon}
-            color="bg-green-500"
-            description="Attendance and performance summary for entire class"
-            onClick={() => setReportType("class")}
-          />
-          <ReportCard
+          <ReportTypeCard
             title="Attendance Report"
             icon={ChartBarIcon}
-            color="bg-purple-500"
+            color="bg-green-500"
             description="Detailed attendance analysis with percentage and eligibility"
-            onClick={() => setReportType("attendance")}
+            type="attendance"
           />
-          <ReportCard
-            title="Semester Results"
-            icon={CalendarIcon}
-            color="bg-orange-500"
-            description="Marks and grades for specific semester"
-            onClick={() => setReportType("semester")}
-          />
-          <ReportCard
-            title="Department Analytics"
+          <ReportTypeCard
+            title="Marks Statement"
             icon={DocumentTextIcon}
-            color="bg-red-500"
-            description="Overall department performance statistics"
-            onClick={() => setReportType("department")}
+            color="bg-purple-500"
+            description="Subject-wise marks and grades for selected semester"
+            type="marks"
           />
-          <ReportCard
-            title="Low Attendance List"
+          <ReportTypeCard
+            title="Student List"
+            icon={UserGroupIcon}
+            color="bg-orange-500"
+            description="Complete list of students with contact details"
+            type="student-list"
+          />
+          <ReportTypeCard
+            title="Department Summary"
             icon={ChartBarIcon}
+            color="bg-red-500"
+            description="Overall department statistics and performance"
+            type="department"
+          />
+          <ReportTypeCard
+            title="Low Attendance Report"
+            icon={ChartBarIcon} // ✅ Fixed: Replaced ExclamationTriangleIcon with ChartBarIcon
             color="bg-yellow-500"
             description="Students with attendance below 75%"
-            onClick={() => setReportType("low-attendance")}
+            type="low-attendance"
           />
         </div>
 
         {/* Report Generation Form */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Generate Report</h2>
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <FunnelIcon className="h-5 w-5 mr-2 text-gray-500" />
+            Generate Report
+          </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -165,15 +345,49 @@ const Reports = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
               >
                 <option value="transcript">Student Transcript</option>
-                <option value="class">Class Report</option>
                 <option value="attendance">Attendance Report</option>
-                <option value="semester">Semester Results</option>
-                <option value="department">Department Analytics</option>
-                <option value="low-attendance">Low Attendance List</option>
+                <option value="marks">Marks Statement</option>
+                <option value="student-list">Student List</option>
+                <option value="department">Department Summary</option>
+                <option value="low-attendance">Low Attendance Report</option>
               </select>
             </div>
 
-            {(reportType === "transcript" || reportType === "attendance") && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Department
+              </label>
+              <select
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">All Departments</option>
+                {departments.map((dept) => (
+                  <option key={dept._id} value={dept._id}>
+                    {dept.name} ({dept.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Semester
+              </label>
+              <select
+                value={selectedSem}
+                onChange={(e) => setSelectedSem(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="">All Semesters</option>
+                {getSemesterOptions()}
+              </select>
+            </div>
+
+            {(reportType === "transcript" ||
+              reportType === "attendance" ||
+              reportType === "marks") && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Select Student
@@ -184,7 +398,7 @@ const Reports = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
                   <option value="">Choose Student</option>
-                  {students.map((student) => (
+                  {getFilteredStudents().map((student) => (
                     <option key={student._id} value={student._id}>
                       {student.usn} - {student.name}
                     </option>
@@ -193,43 +407,20 @@ const Reports = () => {
               </div>
             )}
 
-            {(reportType === "class" || reportType === "department") && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Department
-                </label>
-                <select
-                  value={selectedDept}
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Choose Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept._id} value={dept._id}>
-                      {dept.name} ({dept.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {(reportType === "class" ||
-              reportType === "semester" ||
-              reportType === "attendance") && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Semester
-                </label>
-                <select
-                  value={selectedSem}
-                  onChange={(e) => setSelectedSem(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Choose Semester</option>
-                  {getSemesterOptions()}
-                </select>
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Format
+              </label>
+              <select
+                value={selectedFormat}
+                onChange={(e) => setSelectedFormat(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              >
+                <option value="pdf">PDF Document</option>
+                <option value="excel">Excel Spreadsheet</option>
+                <option value="csv">CSV File</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex justify-end">
@@ -248,31 +439,80 @@ const Reports = () => {
               )}
             </button>
           </div>
+        </div>
 
-          {/* Preview Section */}
-          <div className="mt-8 border-t pt-6">
-            <h3 className="text-lg font-medium mb-4">Recent Reports</h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-500 mr-3" />
-                  <span className="text-sm">
-                    Alice Johnson - Transcript (Sem 1-3)
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500">2 hours ago</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <DocumentTextIcon className="h-5 w-5 text-gray-500 mr-3" />
-                  <span className="text-sm">
-                    CSE Department - Semester 3 Attendance
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500">Yesterday</span>
-              </div>
-            </div>
+        {/* Recent Reports */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h2 className="text-lg font-semibold">
+              Recently Generated Reports
+            </h2>
           </div>
+
+          <div className="divide-y divide-gray-200">
+            {recentReports.map((report) => (
+              <div
+                key={report.id}
+                className="p-6 flex items-center justify-between hover:bg-gray-50"
+              >
+                <div className="flex items-center">
+                  <DocumentTextIcon className="h-8 w-8 text-gray-400 mr-4" />
+                  <div>
+                    <h3 className="font-semibold">{report.title}</h3>
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      <span className="mr-4">{report.type}</span>
+                      <span className="mr-4">{report.date}</span>
+                      <span className="mr-4">{report.size}</span>
+                      <span className="mr-4">{report.format}</span>
+                      <span>
+                        by {report.generatedBy} • {report.generatedOn}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handlePreview(report)}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                    title="Preview"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDownload(report)}
+                    className="p-2 text-green-600 hover:bg-green-50 rounded"
+                    title="Download"
+                  >
+                    <ArrowDownTrayIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handlePrint(report)}
+                    className="p-2 text-purple-600 hover:bg-purple-50 rounded"
+                    title="Print"
+                  >
+                    <PrinterIcon className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare(report)}
+                    className="p-2 text-gray-600 hover:bg-gray-50 rounded"
+                    title="Share"
+                  >
+                    <ShareIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Info Note */}
+        <div className="mt-6 bg-blue-50 rounded-xl p-4">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">📌 Note:</span> Reports are generated
+            in real-time based on current data. Large reports may take a few
+            moments to process. All reports can be downloaded in multiple
+            formats.
+          </p>
         </div>
       </main>
     </div>

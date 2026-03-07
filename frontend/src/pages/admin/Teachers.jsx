@@ -7,6 +7,8 @@ import {
   TrashIcon,
   PlusIcon,
   UserPlusIcon,
+  XMarkIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 
 const Teachers = () => {
@@ -14,6 +16,7 @@ const Teachers = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     teacherId: "",
     name: "",
@@ -81,12 +84,26 @@ const Teachers = () => {
     setSuccess("");
 
     try {
-      await axios.post("http://localhost:5000/api/teachers", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (editingId) {
+        // Update existing teacher
+        await axios.put(
+          `http://localhost:5000/api/teachers/${editingId}`,
+          formData,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        setSuccess("Teacher updated successfully!");
+      } else {
+        // Create new teacher
+        await axios.post("http://localhost:5000/api/teachers", formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccess("Teacher created successfully!");
+      }
 
-      setSuccess("Teacher created successfully!");
       setShowForm(false);
+      setEditingId(null);
       setFormData({
         teacherId: "",
         name: "",
@@ -101,8 +118,59 @@ const Teachers = () => {
       });
       fetchTeachers();
     } catch (error) {
-      setError(error.response?.data?.error || "Failed to create teacher");
+      setError(error.response?.data?.error || "Failed to save teacher");
     }
+  };
+
+  const handleEdit = (teacher) => {
+    setFormData({
+      teacherId: teacher.teacherId,
+      name: teacher.name,
+      email: teacher.email,
+      phone: teacher.phone,
+      departmentId: teacher.departmentId?._id || teacher.departmentId,
+      designation: teacher.designation,
+      qualification: teacher.qualification,
+      specialization: teacher.specialization,
+      experience: teacher.experience,
+      joiningDate: teacher.joiningDate?.split("T")[0] || "",
+    });
+    setEditingId(teacher._id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this teacher?"))
+      return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/teachers/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuccess("Teacher deleted successfully!");
+      fetchTeachers();
+    } catch (error) {
+      setError(error.response?.data?.error || "Failed to delete teacher");
+    }
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({
+      teacherId: "",
+      name: "",
+      email: "",
+      phone: "",
+      departmentId: "",
+      designation: "",
+      qualification: "",
+      specialization: "",
+      experience: "",
+      joiningDate: "",
+    });
+    setError("");
+    setSuccess("");
   };
 
   if (loading) {
@@ -121,31 +189,49 @@ const Teachers = () => {
             Teacher Management
           </h1>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              if (showForm) {
+                cancelForm();
+              } else {
+                setShowForm(true);
+              }
+            }}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
           >
-            <UserPlusIcon className="h-5 w-5 mr-2" />
-            {showForm ? "Cancel" : "Add Teacher"}
+            {showForm ? (
+              <>
+                <XMarkIcon className="h-5 w-5 mr-2" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <UserPlusIcon className="h-5 w-5 mr-2" />
+                Add Teacher
+              </>
+            )}
           </button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4">
+        {/* Success/Error Messages */}
+        {error && (
+          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+            {success}
+          </div>
+        )}
+
+        {/* Form */}
         {showForm && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Add New Teacher</h2>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                {success}
-              </div>
-            )}
+            <h2 className="text-xl font-semibold mb-4">
+              {editingId ? "Edit Teacher" : "Add New Teacher"}
+            </h2>
 
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4">
@@ -303,18 +389,26 @@ const Teachers = () => {
                   />
                 </div>
               </div>
-              <div className="mt-4">
+              <div className="mt-4 flex space-x-4">
                 <button
                   type="submit"
                   className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
                 >
-                  Create Teacher
+                  {editingId ? "Update Teacher" : "Create Teacher"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelForm}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                >
+                  Cancel
                 </button>
               </div>
             </form>
           </div>
         )}
 
+        {/* Teachers Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -364,10 +458,18 @@ const Teachers = () => {
                     {teacher.qualification}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                    <button
+                      onClick={() => handleEdit(teacher)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      title="Edit"
+                    >
                       <PencilIcon className="h-5 w-5" />
                     </button>
-                    <button className="text-red-600 hover:text-red-900">
+                    <button
+                      onClick={() => handleDelete(teacher._id)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Delete"
+                    >
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </td>

@@ -22,7 +22,6 @@ const MarkAttendance = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Mock data for classes
   const classes = [
     {
       id: 1,
@@ -59,81 +58,45 @@ const MarkAttendance = () => {
   ];
 
   useEffect(() => {
-    if (!selectedClass) {
-      // If no class selected, show class selector
-      return;
+    if (selectedClass) {
+      fetchStudents();
     }
-    fetchStudents();
   }, [selectedClass]);
 
   const fetchStudents = async () => {
     setLoading(true);
     // Mock student data
     setTimeout(() => {
-      const mockStudents = [
-        {
-          id: 1,
-          usn: "1BI21CS001",
-          name: "Alice Johnson",
-          attendance: "present",
-        },
-        { id: 2, usn: "1BI21CS002", name: "Bob Smith", attendance: "present" },
-        {
-          id: 3,
-          usn: "1BI21CS003",
-          name: "Charlie Brown",
-          attendance: "absent",
-        },
-        {
-          id: 4,
-          usn: "1BI21CS004",
-          name: "Diana Prince",
-          attendance: "present",
-        },
-        { id: 5, usn: "1BI21CS005", name: "Eve Adams", attendance: "absent" },
-        {
-          id: 6,
-          usn: "1BI21CS006",
-          name: "Frank Castle",
-          attendance: "present",
-        },
-        {
-          id: 7,
-          usn: "1BI21CS007",
-          name: "Grace Hopper",
-          attendance: "present",
-        },
-        {
-          id: 8,
-          usn: "1BI21CS008",
-          name: "Henry Cavill",
-          attendance: "absent",
-        },
-      ];
-      setStudents(mockStudents);
+      setStudents([
+        { id: 1, usn: "1BI21CS001", name: "Alice Johnson", status: "present" },
+        { id: 2, usn: "1BI21CS002", name: "Bob Smith", status: "present" },
+        { id: 3, usn: "1BI21CS003", name: "Charlie Brown", status: "absent" },
+        { id: 4, usn: "1BI21CS004", name: "Diana Prince", status: "present" },
+        { id: 5, usn: "1BI21CS005", name: "Eve Adams", status: "absent" },
+        { id: 6, usn: "1BI21CS006", name: "Frank Castle", status: "present" },
+        { id: 7, usn: "1BI21CS007", name: "Grace Hopper", status: "present" },
+        { id: 8, usn: "1BI21CS008", name: "Henry Cavill", status: "absent" },
+      ]);
       setLoading(false);
     }, 500);
   };
 
   const handleAttendanceChange = (studentId, status) => {
     setStudents(
-      students.map((s) =>
-        s.id === studentId ? { ...s, attendance: status } : s,
-      ),
+      students.map((s) => (s.id === studentId ? { ...s, status } : s)),
     );
   };
 
   const markAllPresent = () => {
-    setStudents(students.map((s) => ({ ...s, attendance: "present" })));
+    setStudents(students.map((s) => ({ ...s, status: "present" })));
   };
 
   const markAllAbsent = () => {
-    setStudents(students.map((s) => ({ ...s, attendance: "absent" })));
+    setStudents(students.map((s) => ({ ...s, status: "absent" })));
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    // Simulate API call
     setTimeout(() => {
       setSubmitting(false);
       alert("Attendance marked successfully!");
@@ -143,7 +106,7 @@ const MarkAttendance = () => {
 
   const getStats = () => {
     const total = students.length;
-    const present = students.filter((s) => s.attendance === "present").length;
+    const present = students.filter((s) => s.status === "present").length;
     const absent = total - present;
     const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
     return { total, present, absent, percentage };
@@ -304,14 +267,12 @@ const MarkAttendance = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          student.attendance === "present"
+                          student.status === "present"
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
-                        {student.attendance === "present"
-                          ? "Present"
-                          : "Absent"}
+                        {student.status === "present" ? "Present" : "Absent"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -320,7 +281,7 @@ const MarkAttendance = () => {
                           handleAttendanceChange(student.id, "present")
                         }
                         className={`mr-2 p-1 rounded ${
-                          student.attendance === "present"
+                          student.status === "present"
                             ? "text-green-600 bg-green-100"
                             : "text-gray-400 hover:text-green-600"
                         }`}
@@ -332,7 +293,7 @@ const MarkAttendance = () => {
                           handleAttendanceChange(student.id, "absent")
                         }
                         className={`p-1 rounded ${
-                          student.attendance === "absent"
+                          student.status === "absent"
                             ? "text-red-600 bg-red-100"
                             : "text-gray-400 hover:text-red-600"
                         }`}
@@ -352,7 +313,7 @@ const MarkAttendance = () => {
           <button
             onClick={handleSubmit}
             disabled={submitting || loading}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center"
+            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
             {submitting ? "Submitting..." : "Submit Attendance"}
           </button>

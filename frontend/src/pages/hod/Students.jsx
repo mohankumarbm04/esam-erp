@@ -8,6 +8,7 @@ import {
   AcademicCapIcon,
   UserGroupIcon,
   ChartBarIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 
 const Students = () => {
@@ -15,6 +16,11 @@ const Students = () => {
   const [loading, setLoading] = useState(true);
   const [department, setDepartment] = useState(null);
   const [selectedSem, setSelectedSem] = useState("all");
+  const [stats, setStats] = useState({
+    total: 0,
+    perSemester: {},
+    lowAttendance: 0,
+  });
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -26,67 +32,53 @@ const Students = () => {
 
   const fetchStudents = async () => {
     try {
-      // Mock data
-      setStudents([
-        {
-          _id: "1",
-          usn: "1BI21CS001",
-          name: "Alice Johnson",
-          semester: 3,
-          section: "A",
-          attendance: 100,
-          parentName: "Mr. Robert Johnson",
-        },
-        {
-          _id: "2",
-          usn: "1BI21CS002",
-          name: "Bob Smith",
-          semester: 3,
-          section: "A",
-          attendance: 82,
-          parentName: "Mrs. Sarah Smith",
-        },
-        {
-          _id: "3",
-          usn: "1BI21CS003",
-          name: "Charlie Brown",
-          semester: 3,
-          section: "A",
-          attendance: 68,
-          parentName: "Mr. David Brown",
-        },
-        {
-          _id: "4",
-          usn: "1BI21CS004",
-          name: "Diana Prince",
-          semester: 3,
-          section: "B",
-          attendance: 92,
-          parentName: "Dr. Helen Prince",
-        },
-        {
-          _id: "5",
-          usn: "1BI21CS005",
-          name: "Eve Adams",
-          semester: 3,
-          section: "B",
-          attendance: 58,
-          parentName: "Mr. John Adams",
-        },
-      ]);
+      const response = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/students",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const studentsData = response.data.students || [];
+      setStudents(studentsData);
+
+      // Calculate statistics
+      const perSemester = {};
+      let lowAttendance = 0;
+
+      studentsData.forEach((student) => {
+        // Count per semester
+        perSemester[student.semester] =
+          (perSemester[student.semester] || 0) + 1;
+
+        // Mock low attendance count (replace with real data later)
+        if (student.attendance && student.attendance < 75) {
+          lowAttendance++;
+        }
+      });
+
+      setStats({
+        total: studentsData.length,
+        perSemester,
+        lowAttendance,
+      });
     } catch (error) {
       console.error("Error fetching students:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchDepartment = async () => {
-    setDepartment({
-      name: "Computer Science",
-      code: "CSE",
-      totalStudents: 180,
-    });
+    try {
+      const response = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/department",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setDepartment(response.data.department);
+    } catch (error) {
+      console.error("Error fetching department:", error);
+    }
   };
 
   const getAttendanceColor = (percentage) => {
@@ -100,20 +92,6 @@ const Students = () => {
       ? students
       : students.filter((s) => s.semester === parseInt(selectedSem));
 
-  const getSemesterStats = () => {
-    const stats = {};
-    students.forEach((s) => {
-      if (!stats[s.semester]) {
-        stats[s.semester] = { total: 0, low: 0 };
-      }
-      stats[s.semester].total++;
-      if (s.attendance < 75) stats[s.semester].low++;
-    });
-    return stats;
-  };
-
-  const semesterStats = getSemesterStats();
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -124,14 +102,16 @@ const Students = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <UserGroupIcon className="h-8 w-8 mr-3 text-blue-500" />
             Department Students
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            {department?.name} ({department?.code}) • Total:{" "}
-            {department?.totalStudents} students
+            {department?.name} ({department?.code}) • Total: {stats.total}{" "}
+            students
           </p>
         </div>
       </header>
@@ -139,11 +119,15 @@ const Students = () => {
       <main className="max-w-7xl mx-auto py-6 px-4">
         {/* Semester Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {Object.entries(semesterStats).map(([sem, data]) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
             <div key={sem} className="bg-white rounded-lg shadow p-6">
               <p className="text-sm text-gray-600">Semester {sem}</p>
-              <p className="text-2xl font-semibold">{data.total} students</p>
-              <p className="text-xs text-red-600 mt-1">{data.low} below 75%</p>
+              <p className="text-2xl font-semibold">
+                {stats.perSemester[sem] || 0} students
+              </p>
+              <p className="text-xs text-red-600 mt-1">
+                {stats.lowAttendance} below 75%
+              </p>
             </div>
           ))}
         </div>
@@ -194,6 +178,9 @@ const Students = () => {
                   Parent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Contact
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
                 </th>
               </tr>
@@ -217,14 +204,20 @@ const Students = () => {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${getAttendanceColor(student.attendance)}`}
                     >
-                      {student.attendance}%
+                      {student.attendance || "N/A"}%
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.parentName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <button className="text-blue-600 hover:text-blue-900 mr-3">
+                    {student.parentPhone}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button className="text-blue-600 hover:text-blue-900 mr-2">
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
+                    <button className="text-green-600 hover:text-green-900 mr-2">
                       <PencilIcon className="h-5 w-5" />
                     </button>
                     <button className="text-red-600 hover:text-red-900">
@@ -233,6 +226,16 @@ const Students = () => {
                   </td>
                 </tr>
               ))}
+              {filteredStudents.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
+                    No students found in this semester.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

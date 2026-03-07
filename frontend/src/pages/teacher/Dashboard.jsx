@@ -10,6 +10,7 @@ import {
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 const TeacherDashboard = () => {
@@ -22,15 +23,33 @@ const TeacherDashboard = () => {
   const [todayClasses, setTodayClasses] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [teacher, setTeacher] = useState(null);
 
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
+    fetchTeacherData();
     fetchTodayClasses();
     fetchRecentActivities();
-    setLoading(false);
   }, []);
+
+  const fetchTeacherData = async () => {
+    try {
+      // Mock data - replace with actual API call
+      setTeacher({
+        name: user.name || "Dr. Rajesh Kumar",
+        department: "Computer Science",
+        email: "rajesh.k@cse.edu",
+        phone: "9876543210",
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching teacher data:", error);
+      setLoading(false);
+    }
+  };
 
   const fetchTodayClasses = async () => {
     // Mock data - replace with API call
@@ -42,6 +61,7 @@ const TeacherDashboard = () => {
         semester: 3,
         section: "A",
         time: "09:00 - 10:00",
+        room: "LH-101",
         students: 25,
         attendanceMarked: true,
       },
@@ -52,6 +72,7 @@ const TeacherDashboard = () => {
         semester: 3,
         section: "B",
         time: "10:15 - 11:15",
+        room: "LH-102",
         students: 24,
         attendanceMarked: false,
       },
@@ -62,16 +83,18 @@ const TeacherDashboard = () => {
         semester: 5,
         section: "A",
         time: "11:30 - 12:30",
+        room: "LH-103",
         students: 26,
         attendanceMarked: true,
       },
       {
         id: 4,
-        subject: "Database Management Systems Lab",
+        subject: "DBMS Lab",
         code: "CS351",
         semester: 3,
         section: "A",
         time: "14:00 - 17:00",
+        room: "Lab-3",
         students: 25,
         attendanceMarked: false,
       },
@@ -143,7 +166,7 @@ const TeacherDashboard = () => {
                 Teacher Dashboard
               </h1>
               <p className="text-sm text-gray-600 mt-1">
-                Welcome back, {user?.name || "Teacher"} • Department of CSE
+                Welcome back, {teacher?.name} • {teacher?.department}
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -152,7 +175,7 @@ const TeacherDashboard = () => {
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
               </button>
               <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold">
-                T
+                {teacher?.name?.charAt(0) || "T"}
               </div>
             </div>
           </div>
@@ -173,7 +196,7 @@ const TeacherDashboard = () => {
           <StatCard
             title="Total Students"
             value={stats.totalStudents}
-            icon={AcademicCapIcon}
+            icon={UserGroupIcon}
             color="bg-green-500"
             onClick={() => navigate("/teacher/students")}
           />
@@ -213,6 +236,8 @@ const TeacherDashboard = () => {
                       <div className="flex items-center mt-2 text-sm text-gray-500">
                         <ClockIcon className="h-4 w-4 mr-1" />
                         {cls.time}
+                        <span className="mx-2">•</span>
+                        <span>📍 {cls.room}</span>
                         <span className="mx-2">•</span>
                         <AcademicCapIcon className="h-4 w-4 mr-1" />
                         {cls.students} students
@@ -274,7 +299,7 @@ const TeacherDashboard = () => {
                   onClick={() => navigate("/teacher/students")}
                   className="w-full text-left p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition"
                 >
-                  <AcademicCapIcon className="h-5 w-5 text-orange-600 inline mr-2" />
+                  <UserGroupIcon className="h-5 w-5 text-orange-600 inline mr-2" />
                   Student List
                 </button>
               </div>

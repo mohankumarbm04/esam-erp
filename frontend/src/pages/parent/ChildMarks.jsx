@@ -1,10 +1,14 @@
 // pages/parent/ChildMarks.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ChartBarIcon,
   ArrowLeftIcon,
   AcademicCapIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 
 const ChildMarks = () => {
@@ -12,116 +16,238 @@ const ChildMarks = () => {
   const navigate = useNavigate();
   const child = location.state?.child;
   const [selectedSem, setSelectedSem] = useState("3");
+  const [marksData, setMarksData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({
+    sgpa: 0,
+    totalMarks: 0,
+    totalCredits: 0,
+    earnedCredits: 0,
+    subjectWise: {},
+  });
 
-  const marksData = [
-    {
-      semester: 3,
-      sgpa: 8.5,
-      subjects: [
-        {
-          code: "CS301",
-          name: "DBMS",
-          ia: 27,
-          lab: null,
-          exam: 85,
-          total: 112,
-          grade: "O",
-          gp: 10,
-        },
-        {
-          code: "CS302",
-          name: "Data Structures",
-          ia: 24.5,
-          lab: null,
-          exam: 78,
-          total: 102.5,
-          grade: "A+",
-          gp: 9,
-        },
-        {
-          code: "CS303",
-          name: "Algorithms",
-          ia: 25.5,
-          lab: null,
-          exam: 82,
-          total: 107.5,
-          grade: "A",
-          gp: 8,
-        },
-        {
-          code: "CS351",
-          name: "DBMS Lab",
-          ia: null,
-          lab: 23,
-          exam: null,
-          total: 23,
-          grade: "O",
-          gp: 10,
-        },
-      ],
-    },
-    {
-      semester: 2,
-      sgpa: 8.2,
-      subjects: [
-        {
-          code: "CS201",
-          name: "OOP",
-          ia: 25.5,
-          lab: null,
-          exam: 80,
-          total: 105.5,
-          grade: "A",
-          gp: 8,
-        },
-        {
-          code: "CS202",
-          name: "Discrete Math",
-          ia: 23.5,
-          lab: null,
-          exam: 75,
-          total: 98.5,
-          grade: "B+",
-          gp: 7,
-        },
-        {
-          code: "CS203",
-          name: "Digital Electronics",
-          ia: 25.5,
-          lab: null,
-          exam: 82,
-          total: 107.5,
-          grade: "A",
-          gp: 8,
-        },
-      ],
-    },
-  ];
+  useEffect(() => {
+    if (!child) {
+      navigate("/parent/dashboard");
+      return;
+    }
+    fetchMarks();
+  }, [child, selectedSem]);
 
-  if (!child) {
-    navigate("/parent/dashboard");
-    return null;
-  }
+  const fetchMarks = async () => {
+    // Mock data - replace with API call
+    setTimeout(() => {
+      const data = {
+        semester: 3,
+        sgpa: 8.7,
+        totalCredits: 24,
+        earnedCredits: 24,
+        subjects: [
+          {
+            code: "CS301",
+            name: "Database Management Systems",
+            type: "Theory",
+            credits: 4,
+            faculty: "Dr. Rajesh Kumar",
+            ia1: 28,
+            ia2: 26,
+            ia3: 27,
+            bestIa: 27.5,
+            lab: null,
+            exam: 85,
+            total: 112.5,
+            grade: "O",
+            gradePoint: 10,
+            status: "completed",
+            classAverage: 78.5,
+            highest: 118,
+            rank: 3,
+          },
+          {
+            code: "CS302",
+            name: "Data Structures",
+            type: "Theory",
+            credits: 4,
+            faculty: "Prof. Sunita Sharma",
+            ia1: 24,
+            ia2: 25,
+            ia3: 23,
+            bestIa: 24.5,
+            lab: null,
+            exam: 78,
+            total: 102.5,
+            grade: "A+",
+            gradePoint: 9,
+            status: "completed",
+            classAverage: 72.5,
+            highest: 108,
+            rank: 5,
+          },
+          {
+            code: "CS303",
+            name: "Algorithm Design",
+            type: "Theory",
+            credits: 4,
+            faculty: "Dr. Anil Kumar",
+            ia1: 26,
+            ia2: 24,
+            ia3: 25,
+            bestIa: 25.5,
+            lab: null,
+            exam: 82,
+            total: 107.5,
+            grade: "A",
+            gradePoint: 8,
+            status: "completed",
+            classAverage: 75.0,
+            highest: 112,
+            rank: 4,
+          },
+          {
+            code: "CS304",
+            name: "Operating Systems",
+            type: "Theory",
+            credits: 4,
+            faculty: "Dr. Prakash Rao",
+            ia1: 22,
+            ia2: 24,
+            ia3: null,
+            bestIa: 23,
+            lab: null,
+            exam: null,
+            total: 23,
+            grade: "P",
+            gradePoint: 4,
+            status: "pending",
+            classAverage: null,
+            highest: null,
+            rank: null,
+          },
+          {
+            code: "CS351",
+            name: "DBMS Lab",
+            type: "Lab",
+            credits: 2,
+            faculty: "Dr. Rajesh Kumar",
+            ia1: null,
+            ia2: null,
+            ia3: null,
+            bestIa: null,
+            lab: 23,
+            exam: null,
+            total: 23,
+            grade: "O",
+            gradePoint: 10,
+            status: "completed",
+            classAverage: 20.5,
+            highest: 25,
+            rank: 2,
+          },
+          {
+            code: "MA301",
+            name: "Discrete Mathematics",
+            type: "Theory",
+            credits: 4,
+            faculty: "Prof. K.V. Sharma",
+            ia1: 25,
+            ia2: 24,
+            ia3: 26,
+            bestIa: 25.5,
+            lab: null,
+            exam: 79,
+            total: 104.5,
+            grade: "A",
+            gradePoint: 8,
+            status: "completed",
+            classAverage: 68.5,
+            highest: 108,
+            rank: 6,
+          },
+        ],
+      };
 
-  const currentData =
-    marksData.find((d) => d.semester === parseInt(selectedSem)) || marksData[0];
+      setMarksData(data.subjects);
+
+      const totalMarks = data.subjects.reduce(
+        (acc, sub) => acc + (sub.total || 0),
+        0,
+      );
+
+      setSummary({
+        sgpa: data.sgpa,
+        totalMarks,
+        totalCredits: data.totalCredits,
+        earnedCredits: data.earnedCredits,
+      });
+
+      setLoading(false);
+    }, 500);
+  };
 
   const getGradeColor = (grade) => {
     const colors = {
-      O: "bg-green-100 text-green-800",
-      "A+": "bg-blue-100 text-blue-800",
-      A: "bg-indigo-100 text-indigo-800",
-      "B+": "bg-yellow-100 text-yellow-800",
-      B: "bg-orange-100 text-orange-800",
-      C: "bg-purple-100 text-purple-800",
-      P: "bg-gray-100 text-gray-800",
-      F: "bg-red-100 text-red-800",
+      O: "bg-green-100 text-green-800 border-green-200",
+      "A+": "bg-blue-100 text-blue-800 border-blue-200",
+      A: "bg-indigo-100 text-indigo-800 border-indigo-200",
+      "B+": "bg-yellow-100 text-yellow-800 border-yellow-200",
+      B: "bg-orange-100 text-orange-800 border-orange-200",
+      C: "bg-purple-100 text-purple-800 border-purple-200",
+      P: "bg-gray-100 text-gray-800 border-gray-200",
+      F: "bg-red-100 text-red-800 border-red-200",
     };
-    return colors[grade] || "bg-gray-100 text-gray-800";
+    return colors[grade] || "bg-gray-100 text-gray-800 border-gray-200";
   };
+
+  const getScoreColor = (score, max) => {
+    if (!score) return "text-gray-400";
+    const percentage = (score / max) * 100;
+    if (percentage >= 80) return "text-green-600 font-semibold";
+    if (percentage >= 60) return "text-blue-600 font-semibold";
+    if (percentage >= 40) return "text-yellow-600 font-semibold";
+    return "text-red-600 font-semibold";
+  };
+
+  const getPerformanceIndicator = (total, avg) => {
+    if (!avg) return null;
+    const diff = total - avg;
+    if (diff > 10)
+      return { text: "Excellent", color: "text-green-600", icon: "🚀" };
+    if (diff > 5)
+      return { text: "Above Average", color: "text-blue-600", icon: "📈" };
+    if (diff > -5)
+      return { text: "Average", color: "text-yellow-600", icon: "📊" };
+    if (diff > -10)
+      return { text: "Below Average", color: "text-orange-600", icon: "📉" };
+    return { text: "Needs Improvement", color: "text-red-600", icon: "⚠️" };
+  };
+
+  const getSemesterOptions = () => {
+    return [1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+      <option key={sem} value={sem}>
+        Semester {sem}
+      </option>
+    ));
+  };
+
+  const downloadMarksReport = () => {
+    alert("Downloading marks report...");
+  };
+
+  if (!child) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading marks...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4">
           <div className="flex items-center">
@@ -131,107 +257,324 @@ const ChildMarks = () => {
             >
               <ArrowLeftIcon className="h-6 w-6" />
             </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <ChartBarIcon className="h-8 w-8 mr-3 text-blue-500" />
                 {child.name}'s Marks
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 {child.usn} • {child.department} • Semester {child.semester}
               </p>
             </div>
+            <button
+              onClick={downloadMarksReport}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+              Download Report
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center justify-between">
+        {/* Controls and Summary */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700">
-                Select Semester:
-              </label>
-              <select
-                value={selectedSem}
-                onChange={(e) => setSelectedSem(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="3">Semester 3</option>
-                <option value="2">Semester 2</option>
-              </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Semester
+                </label>
+                <select
+                  value={selectedSem}
+                  onChange={(e) => setSelectedSem(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  {getSemesterOptions()}
+                </select>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Semester SGPA</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {currentData.sgpa}
-              </p>
+
+            <div className="mt-4 md:mt-0 flex items-center space-x-8">
+              <div className="text-center">
+                <p className="text-sm text-gray-600">SGPA</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {summary.sgpa}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-600">Total Marks</p>
+                <p className="text-2xl font-semibold">{summary.totalMarks}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-gray-600">Credits Earned</p>
+                <p className="text-2xl font-semibold text-green-600">
+                  {summary.earnedCredits}/{summary.totalCredits}
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Marks Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Subject
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  IA Marks
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Lab
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Exam
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Grade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  GP
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentData.subjects.map((subject, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">
-                      {subject.code}
+        {/* Marks Cards */}
+        <div className="grid grid-cols-1 gap-6">
+          {marksData.map((subject, index) => {
+            const performance = subject.classAverage
+              ? getPerformanceIndicator(subject.total, subject.classAverage)
+              : null;
+
+            return (
+              <div
+                key={index}
+                className="bg-white rounded-xl shadow-md overflow-hidden"
+              >
+                {/* Subject Header */}
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <div className="flex items-center">
+                        <h3 className="text-lg font-semibold">
+                          {subject.name}
+                        </h3>
+                        <span className="ml-3 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          {subject.type}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {subject.code} • {subject.credits} Credits •{" "}
+                        {subject.faculty}
+                      </p>
                     </div>
-                    <div className="text-xs text-gray-500">{subject.name}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {subject.ia || "-"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {subject.lab || "-"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {subject.exam || "-"}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {subject.total}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getGradeColor(subject.grade)}`}
-                    >
-                      {subject.grade}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {subject.gp}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <div className="mt-2 md:mt-0 flex items-center space-x-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium border ${getGradeColor(subject.grade)}`}
+                      >
+                        Grade: {subject.grade} ({subject.gradePoint})
+                      </span>
+                      {subject.status === "pending" ? (
+                        <span className="flex items-center text-yellow-600 text-sm">
+                          <ClockIcon className="h-4 w-4 mr-1" />
+                          Pending
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-green-600 text-sm">
+                          <CheckCircleIcon className="h-4 w-4 mr-1" />
+                          Completed
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Marks Grid */}
+                <div className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-4">
+                    {/* IA Marks */}
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-blue-600 font-medium">IA 1</p>
+                      <p
+                        className={`text-lg font-bold ${getScoreColor(subject.ia1 || 0, 30)}`}
+                      >
+                        {subject.ia1 || "-"}
+                      </p>
+                      <p className="text-xs text-gray-500">/30</p>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-blue-600 font-medium">IA 2</p>
+                      <p
+                        className={`text-lg font-bold ${getScoreColor(subject.ia2 || 0, 30)}`}
+                      >
+                        {subject.ia2 || "-"}
+                      </p>
+                      <p className="text-xs text-gray-500">/30</p>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-blue-600 font-medium">IA 3</p>
+                      <p
+                        className={`text-lg font-bold ${getScoreColor(subject.ia3 || 0, 30)}`}
+                      >
+                        {subject.ia3 || "-"}
+                      </p>
+                      <p className="text-xs text-gray-500">/30</p>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-green-600 font-medium">
+                        Best IA
+                      </p>
+                      <p
+                        className={`text-lg font-bold ${getScoreColor(subject.bestIa || 0, 30)}`}
+                      >
+                        {subject.bestIa || "-"}
+                      </p>
+                      <p className="text-xs text-gray-500">/30</p>
+                    </div>
+
+                    {subject.type === "Lab" ? (
+                      <div className="bg-purple-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-purple-600 font-medium">
+                          Lab
+                        </p>
+                        <p
+                          className={`text-lg font-bold ${getScoreColor(subject.lab || 0, 25)}`}
+                        >
+                          {subject.lab || "-"}
+                        </p>
+                        <p className="text-xs text-gray-500">/25</p>
+                      </div>
+                    ) : (
+                      <div className="bg-orange-50 rounded-lg p-3 text-center">
+                        <p className="text-xs text-orange-600 font-medium">
+                          Sem Exam
+                        </p>
+                        <p
+                          className={`text-lg font-bold ${getScoreColor(subject.exam || 0, 100)}`}
+                        >
+                          {subject.exam || "-"}
+                        </p>
+                        <p className="text-xs text-gray-500">/100</p>
+                      </div>
+                    )}
+
+                    <div className="bg-purple-50 rounded-lg p-3 text-center">
+                      <p className="text-xs text-purple-600 font-medium">
+                        Total
+                      </p>
+                      <p className="text-xl font-bold text-purple-700">
+                        {subject.total}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        /{subject.type === "Lab" ? 25 : 150}
+                      </p>
+                    </div>
+
+                    <div className="bg-gray-800 rounded-lg p-3 text-center">
+                      <p className="text-xs text-gray-300 font-medium">
+                        Class Rank
+                      </p>
+                      <p className="text-xl font-bold text-white">
+                        {subject.rank || "-"}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        of {subject.classAverage ? "30" : "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Performance Analysis */}
+                  <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {subject.classAverage && (
+                      <>
+                        <div>
+                          <p className="text-xs text-gray-500">Class Average</p>
+                          <p className="text-sm font-semibold">
+                            {subject.classAverage}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">
+                            Highest in Class
+                          </p>
+                          <p className="text-sm font-semibold">
+                            {subject.highest}
+                          </p>
+                        </div>
+                        {performance && (
+                          <div
+                            className={`flex items-center ${performance.color}`}
+                          >
+                            <span className="mr-2">{performance.icon}</span>
+                            <span className="text-sm font-medium">
+                              {performance.text}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Remarks */}
+                  {subject.rank && subject.rank <= 3 && (
+                    <div className="mt-3 p-2 bg-yellow-50 rounded-lg">
+                      <p className="text-xs text-yellow-700">
+                        ⭐ Congratulations! Ranked {subject.rank} in class.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Grade Scale Legend */}
+        <div className="mt-6 bg-white rounded-xl shadow-md p-6">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">
+            Grade Scale
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-green-100 text-green-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                O
+              </span>
+              <span className="text-sm text-gray-600">90-100% (10 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-blue-100 text-blue-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                A+
+              </span>
+              <span className="text-sm text-gray-600">80-89% (9 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-indigo-100 text-indigo-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                A
+              </span>
+              <span className="text-sm text-gray-600">70-79% (8 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-yellow-100 text-yellow-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                B+
+              </span>
+              <span className="text-sm text-gray-600">60-69% (7 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-orange-100 text-orange-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                B
+              </span>
+              <span className="text-sm text-gray-600">55-59% (6 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-purple-100 text-purple-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                C
+              </span>
+              <span className="text-sm text-gray-600">50-54% (5 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-gray-100 text-gray-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                P
+              </span>
+              <span className="text-sm text-gray-600">40-49% (4 GP)</span>
+            </div>
+            <div className="flex items-center">
+              <span className="w-8 h-8 bg-red-100 text-red-800 rounded-lg flex items-center justify-center font-bold mr-2">
+                F
+              </span>
+              <span className="text-sm text-gray-600">&lt;40% (0 GP)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Note */}
+        <div className="mt-6 bg-blue-50 rounded-xl p-4">
+          <p className="text-sm text-blue-700">
+            <span className="font-medium">📊 Performance Insight:</span> Overall
+            SGPA of {summary.sgpa} is above the departmental average.
+            {marksData.filter((s) => s.rank && s.rank <= 5).length > 0 &&
+              ` Ranked in top 5 in ${marksData.filter((s) => s.rank && s.rank <= 5).length} subjects.`}
+          </p>
         </div>
       </main>
     </div>

@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import {
   PencilIcon,
   TrashIcon,
-  UserPlusIcon,
-  AcademicCapIcon,
   EnvelopeIcon,
   PhoneIcon,
+  AcademicCapIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 const Teachers = () => {
@@ -26,56 +26,31 @@ const Teachers = () => {
 
   const fetchTeachers = async () => {
     try {
-      // This would fetch teachers for HOD's department
-      // Mock data for now
-      setTeachers([
-        {
-          _id: "1",
-          teacherId: "TCH001",
-          name: "Dr. Rajesh Kumar",
-          email: "rajesh.k@cse.edu",
-          phone: "9876543210",
-          designation: "Professor",
-          qualification: "Ph.D. CS",
-          specialization: "DBMS",
-          experience: 15,
-        },
-        {
-          _id: "2",
-          teacherId: "TCH002",
-          name: "Prof. Sunita Sharma",
-          email: "sunita.s@cse.edu",
-          phone: "9876543211",
-          designation: "Associate Professor",
-          qualification: "M.Tech, Ph.D.",
-          specialization: "Networks",
-          experience: 12,
-        },
-        {
-          _id: "3",
-          teacherId: "TCH003",
-          name: "Dr. Anil Kumar",
-          email: "anil.k@cse.edu",
-          phone: "9876543212",
-          designation: "Assistant Professor",
-          qualification: "Ph.D. AI",
-          specialization: "Machine Learning",
-          experience: 8,
-        },
-      ]);
+      const response = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/teachers",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setTeachers(response.data.teachers || []);
     } catch (error) {
       console.error("Error fetching teachers:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchDepartment = async () => {
-    setDepartment({
-      name: "Computer Science",
-      code: "CSE",
-      totalTeachers: 12,
-    });
+    try {
+      const response = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/department",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setDepartment(response.data.department);
+    } catch (error) {
+      console.error("Error fetching department:", error);
+    }
   };
 
   if (loading) {
@@ -88,14 +63,16 @@ const Teachers = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto py-6 px-4">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <UserGroupIcon className="h-8 w-8 mr-3 text-blue-500" />
             Department Teachers
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            {department?.name} ({department?.code}) • Total:{" "}
-            {department?.totalTeachers} teachers
+            {department?.name} ({department?.code}) • Total: {teachers.length}{" "}
+            teachers
           </p>
         </div>
       </header>
@@ -105,19 +82,33 @@ const Teachers = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600">Professors</p>
-            <p className="text-2xl font-semibold">4</p>
+            <p className="text-2xl font-semibold">
+              {teachers.filter((t) => t.designation === "Professor").length}
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600">Associate Professors</p>
-            <p className="text-2xl font-semibold">3</p>
+            <p className="text-2xl font-semibold">
+              {
+                teachers.filter((t) => t.designation === "Associate Professor")
+                  .length
+              }
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600">Assistant Professors</p>
-            <p className="text-2xl font-semibold">5</p>
+            <p className="text-2xl font-semibold">
+              {
+                teachers.filter((t) => t.designation === "Assistant Professor")
+                  .length
+              }
+            </p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600">Ph.D. Holders</p>
-            <p className="text-2xl font-semibold">8</p>
+            <p className="text-2xl font-semibold">
+              {teachers.filter((t) => t.qualification?.includes("Ph.D")).length}
+            </p>
           </div>
         </div>
 
@@ -195,6 +186,16 @@ const Teachers = () => {
                   </td>
                 </tr>
               ))}
+              {teachers.length === 0 && (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
+                    No teachers found in your department.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

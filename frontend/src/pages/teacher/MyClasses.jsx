@@ -1,89 +1,89 @@
 // pages/teacher/MyClasses.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpenIcon,
   CalendarIcon,
-  ChartBarIcon,
-  AcademicCapIcon,
   ClockIcon,
+  AcademicCapIcon,
+  ChartBarIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 const MyClasses = () => {
   const navigate = useNavigate();
-  const [selectedSemester, setSelectedSemester] = useState("all");
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const classes = [
-    {
-      id: 1,
-      subject: "Database Management Systems",
-      code: "CS301",
-      semester: 3,
-      section: "A",
-      students: 25,
-      schedule: [
-        { day: "Monday", time: "09:00 - 10:00" },
-        { day: "Wednesday", time: "09:00 - 10:00" },
-        { day: "Friday", time: "10:15 - 11:15" },
-      ],
-      attendanceMarked: 12,
-      totalClasses: 15,
-      averageMarks: 78,
-    },
-    {
-      id: 2,
-      subject: "Data Structures",
-      code: "CS302",
-      semester: 3,
-      section: "B",
-      students: 24,
-      schedule: [
-        { day: "Tuesday", time: "10:15 - 11:15" },
-        { day: "Thursday", time: "10:15 - 11:15" },
-        { day: "Friday", time: "11:30 - 12:30" },
-      ],
-      attendanceMarked: 10,
-      totalClasses: 15,
-      averageMarks: 72,
-    },
-    {
-      id: 3,
-      subject: "Algorithm Design",
-      code: "CS303",
-      semester: 5,
-      section: "A",
-      students: 26,
-      schedule: [
-        { day: "Monday", time: "11:30 - 12:30" },
-        { day: "Wednesday", time: "11:30 - 12:30" },
-        { day: "Thursday", time: "14:00 - 15:00" },
-      ],
-      attendanceMarked: 14,
-      totalClasses: 15,
-      averageMarks: 81,
-    },
-    {
-      id: 4,
-      subject: "DBMS Lab",
-      code: "CS351",
-      semester: 3,
-      section: "A",
-      students: 25,
-      schedule: [{ day: "Tuesday", time: "14:00 - 17:00" }],
-      attendanceMarked: 5,
-      totalClasses: 8,
-      averageMarks: 85,
-    },
-  ];
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
-  const filteredClasses =
-    selectedSemester === "all"
-      ? classes
-      : classes.filter((c) => c.semester === parseInt(selectedSemester));
-
-  const getSemesterOptions = () => {
-    const sems = [...new Set(classes.map((c) => c.semester))];
-    return sems.sort((a, b) => a - b);
+  const fetchClasses = async () => {
+    // Mock data - replace with API call
+    setClasses([
+      {
+        id: 1,
+        subject: "Database Management Systems",
+        code: "CS301",
+        semester: 3,
+        section: "A",
+        students: 25,
+        schedule: [
+          { day: "Monday", time: "09:00 - 10:00", room: "LH-101" },
+          { day: "Wednesday", time: "09:00 - 10:00", room: "LH-101" },
+          { day: "Friday", time: "10:15 - 11:15", room: "LH-101" },
+        ],
+        attendanceMarked: 12,
+        totalClasses: 15,
+        averageMarks: 78,
+      },
+      {
+        id: 2,
+        subject: "Data Structures",
+        code: "CS302",
+        semester: 3,
+        section: "B",
+        students: 24,
+        schedule: [
+          { day: "Tuesday", time: "10:15 - 11:15", room: "LH-102" },
+          { day: "Thursday", time: "10:15 - 11:15", room: "LH-102" },
+          { day: "Friday", time: "11:30 - 12:30", room: "LH-102" },
+        ],
+        attendanceMarked: 10,
+        totalClasses: 15,
+        averageMarks: 72,
+      },
+      {
+        id: 3,
+        subject: "Algorithm Design",
+        code: "CS303",
+        semester: 5,
+        section: "A",
+        students: 26,
+        schedule: [
+          { day: "Monday", time: "11:30 - 12:30", room: "LH-103" },
+          { day: "Wednesday", time: "11:30 - 12:30", room: "LH-103" },
+          { day: "Thursday", time: "14:00 - 15:00", room: "LH-103" },
+        ],
+        attendanceMarked: 14,
+        totalClasses: 15,
+        averageMarks: 81,
+      },
+      {
+        id: 4,
+        subject: "DBMS Lab",
+        code: "CS351",
+        semester: 3,
+        section: "A",
+        students: 25,
+        schedule: [{ day: "Tuesday", time: "14:00 - 17:00", room: "Lab-3" }],
+        attendanceMarked: 5,
+        totalClasses: 8,
+        averageMarks: 85,
+      },
+    ]);
+    setLoading(false);
   };
 
   const ClassCard = ({ cls }) => (
@@ -100,13 +100,14 @@ const MyClasses = () => {
         </span>
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 mb-4">
         {cls.schedule.map((sch, idx) => (
           <div key={idx} className="flex items-center text-sm text-gray-600">
             <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
             <span className="w-20">{sch.day}:</span>
             <ClockIcon className="h-4 w-4 mx-2 text-gray-400" />
             <span>{sch.time}</span>
+            <span className="ml-2 text-gray-400">📍 {sch.room}</span>
           </div>
         ))}
       </div>
@@ -149,6 +150,14 @@ const MyClasses = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading classes...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
@@ -161,30 +170,8 @@ const MyClasses = () => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <label className="text-sm font-medium text-gray-700">
-              Filter by Semester:
-            </label>
-            <select
-              value={selectedSemester}
-              onChange={(e) => setSelectedSemester(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md"
-            >
-              <option value="all">All Semesters</option>
-              {getSemesterOptions().map((sem) => (
-                <option key={sem} value={sem}>
-                  Semester {sem}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Classes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredClasses.map((cls) => (
+          {classes.map((cls) => (
             <ClassCard key={cls.id} cls={cls} />
           ))}
         </div>
