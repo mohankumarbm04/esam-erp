@@ -8,7 +8,6 @@ import {
   PlusIcon,
   UserPlusIcon,
   XMarkIcon,
-  CheckIcon,
 } from "@heroicons/react/24/outline";
 
 const Teachers = () => {
@@ -104,18 +103,7 @@ const Teachers = () => {
 
       setShowForm(false);
       setEditingId(null);
-      setFormData({
-        teacherId: "",
-        name: "",
-        email: "",
-        phone: "",
-        departmentId: "",
-        designation: "",
-        qualification: "",
-        specialization: "",
-        experience: "",
-        joiningDate: "",
-      });
+      resetForm();
       fetchTeachers();
     } catch (error) {
       setError(error.response?.data?.error || "Failed to save teacher");
@@ -139,6 +127,7 @@ const Teachers = () => {
     setShowForm(true);
   };
 
+  // ✅ ADD DELETE FUNCTION
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this teacher?"))
       return;
@@ -154,9 +143,7 @@ const Teachers = () => {
     }
   };
 
-  const cancelForm = () => {
-    setShowForm(false);
-    setEditingId(null);
+  const resetForm = () => {
     setFormData({
       teacherId: "",
       name: "",
@@ -169,6 +156,12 @@ const Teachers = () => {
       experience: "",
       joiningDate: "",
     });
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    resetForm();
     setError("");
     setSuccess("");
   };
@@ -194,6 +187,8 @@ const Teachers = () => {
                 cancelForm();
               } else {
                 setShowForm(true);
+                setEditingId(null);
+                resetForm();
               }
             }}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
@@ -466,7 +461,7 @@ const Teachers = () => {
                       <PencilIcon className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(teacher._id)}
+                      onClick={() => handleDelete(teacher._id)} // ✅ DELETE BUTTON ADDED
                       className="text-red-600 hover:text-red-900"
                       title="Delete"
                     >
