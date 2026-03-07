@@ -29,45 +29,39 @@ const HODDashboard = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
-    fetchDepartmentData();
     fetchStats();
     fetchRecentActivities();
   }, []);
 
-  const fetchDepartmentData = async () => {
-    try {
-      // Assuming HOD's department is stored in user data
-      // This would come from your API
-      setDepartment({
-        name: "Computer Science",
-        code: "CSE",
-        totalTeachers: 12,
-        totalStudents: 180,
-        totalSubjects: 24,
-      });
-    } catch (error) {
-      console.error("Error fetching department:", error);
-    }
-  };
-
   const fetchStats = async () => {
     try {
-      // This would come from your API
-      setStats({
-        teachers: 12,
-        students: 180,
-        subjects: 24,
-        lowAttendance: 8,
-        pendingApprovals: 3,
-      });
+      const token = localStorage.getItem("token");
+
+      // Fetch department details
+      const deptRes = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/department",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setDepartment(deptRes.data.department);
+
+      // Fetch statistics
+      const statsRes = await axios.get(
+        "https://esam-erp.onrender.com/api/hod/stats",
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setStats(statsRes.data);
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      console.error("Error fetching data:", error);
+      if (error.response?.status === 401) {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchRecentActivities = async () => {
+    // Mock data - replace with real API call later
     setRecentActivities([
       {
         id: 1,
