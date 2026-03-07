@@ -1,6 +1,5 @@
 // src/pages/auth/Login.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 const Login = () => {
@@ -8,8 +7,6 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,25 +20,8 @@ const Login = () => {
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      switch (user.role) {
-        case "admin":
-          navigate("/admin/dashboard");
-          break;
-        case "hod":
-          navigate("/hod/dashboard");
-          break;
-        case "teacher":
-          navigate("/teacher/dashboard");
-          break;
-        case "student":
-          navigate("/student/dashboard");
-          break;
-        case "parent":
-          navigate("/parent/dashboard");
-          break;
-        default:
-          navigate("/dashboard");
-      }
+      // FORCE PAGE RELOAD AND REDIRECT - THIS ALWAYS WORKS
+      window.location.href = `/${user.role}/dashboard`;
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");
     } finally {
