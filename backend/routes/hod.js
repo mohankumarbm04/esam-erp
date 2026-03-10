@@ -5,8 +5,9 @@ const Teacher = require("../models/Teacher");
 const Student = require("../models/Student");
 const Subject = require("../models/Subject");
 const Department = require("../models/Department");
+const User = require("../models/User");
 const authMiddleware = require("../middleware/auth");
-const { isHOD } = require("../middleware/rbac");
+const { isHOD, isAdmin } = require("../middleware/rbac");
 
 // @route   GET /api/hod/department
 // @desc    Get HOD's department details
@@ -44,15 +45,14 @@ router.get("/stats", authMiddleware, isHOD, async (req, res) => {
       Subject.countDocuments({ departmentId: department._id }),
     ]);
 
-    // Get low attendance count (you'll need to implement this)
-    const lowAttendance = 0; // Placeholder
+    const lowAttendance = 0;
 
     res.json({
       teachers,
       students,
       subjects,
       lowAttendance,
-      pendingApprovals: 0, // Placeholder
+      pendingApprovals: 0,
     });
   } catch (error) {
     console.error(error);
@@ -91,6 +91,60 @@ router.get("/students", authMiddleware, isHOD, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ============================================================
+// HOD USERS (Admin aliases required by spec)
+// ============================================================
+
+// @route   PUT /api/hod/:id
+// @desc    Update HOD user account
+// @access  Private (Admin only)
+router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
+  try {
+    const { username, email, password, isActive } = req.body;
+
+    const hod = await User.findById(req.params.id);
+    if (!hod || hod.role !== "hod") {
+      return res.status(404).json({ error: "HOD not found" });
+    }
+
+    if (typeof username === "string") hod.username = username.trim();
+    if (typeof email === "string") hod.email = email.toLowerCase().trim();
+    if (typeof isActive === "boolean") hod.isActive = isActive;
+    if (password) hod.password = password;
+
+    await hod.save();
+
+    const cleaned = await User.findById(hod._id).select("-password");
+    res.json({ message: "HOD updated successfully", hod: cleaned });
+  } catch (error) {
+    console.error("❌ Error updating HOD:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// @route   DELETE /api/hod/:id
+// @desc    Delete HOD user account (and unassign from departments)
+// @access  Private (Admin only)
+router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
+  try {
+    const hod = await User.findById(req.params.id);
+    if (!hod || hod.role !== "hod") {
+      return res.status(404).json({ error: "HOD not found" });
+    }
+
+    await Department.updateMany(
+      { hodId: hod._id },
+      { $set: { hodId: null, hodName: null } },
+    );
+
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ message: "HOD deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting HOD:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

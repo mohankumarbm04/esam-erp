@@ -187,8 +187,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // @route   PUT /api/teachers/:id
 // @desc    Update teacher
-// @access  Private (Admin or HOD)
-router.put("/:id", authMiddleware, isHOD, async (req, res) => {
+// @access  Private (Admin only)
+router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
   try {
     console.log("📝 Updating teacher:", req.params.id);
 
@@ -234,6 +234,36 @@ router.put("/:id", authMiddleware, isHOD, async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+// @route   DELETE /api/teachers/:id
+// @desc    Delete teacher
+// @access  Private (Admin only)
+router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
+  try {
+    console.log("🗑️ Deleting teacher:", req.params.id);
+
+    const teacher = await Teacher.findById(req.params.id);
+    if (!teacher) {
+      return res.status(404).json({ success: false, error: "Teacher not found" });
+    }
+
+    const deptId = teacher.departmentId;
+    await Teacher.findByIdAndDelete(req.params.id);
+
+    if (deptId) {
+      const dept = await Department.findById(deptId);
+      if (dept) {
+        dept.totalTeachers = Math.max(0, (dept.totalTeachers || 0) - 1);
+        await dept.save();
+      }
+    }
+
+    res.json({ success: true, message: "Teacher deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting teacher:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

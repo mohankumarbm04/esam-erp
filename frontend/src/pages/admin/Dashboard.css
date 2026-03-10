@@ -1,0 +1,265 @@
+/* src/pages/admin/Dashboard.css */
+
+/* Loading State */
+.loading-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAFC;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563EB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header-title h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 8px;
+}
+
+.text-muted {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: white;
+  border-radius: 10px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.icon-btn:hover {
+  background: #2563EB;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: #EF4444;
+  border-radius: 50%;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.stat-card-title {
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.stat-card-value {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Quick Actions */
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.quick-action-btn {
+  border: none;
+  background: #F8FAFC;
+  border-radius: 12px;
+  padding: 16px 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-action-btn:hover {
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Activity List */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.activity-item:hover {
+  background: #F8FAFC;
+}
+
+.activity-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-action {
+  color: #1F2937;
+  margin-bottom: 4px;
+}
+
+.activity-meta {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.view-all-btn {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: 12px;
+}
+
+/* Alert */
+.alert {
+  padding: 12px 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert-warning {
+  background: #FEF3C7;
+  color: #92400E;
+  border-left: 4px solid #F59E0B;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

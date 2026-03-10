@@ -1,11 +1,13 @@
 // pages/teacher/EnterMarks.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChartBarIcon,
   AcademicCapIcon,
   ArrowLeftIcon,
   CheckCircleIcon,
+  CalculatorIcon,
+  ArrowDownTrayIcon, // ✅ Replaced SaveIcon with ArrowDownTrayIcon
 } from "@heroicons/react/24/outline";
 
 const EnterMarks = () => {
@@ -13,35 +15,18 @@ const EnterMarks = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [selectedExam, setSelectedExam] = useState("ia1");
   const [marks, setMarks] = useState({});
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [stats, setStats] = useState({
+    total: 0,
+    entered: 0,
+    average: 0,
+    highest: 0,
+    lowest: 100,
+  });
 
-  const classes = [
-    {
-      id: 1,
-      subject: "Database Management Systems",
-      code: "CS301",
-      semester: 3,
-      section: "A",
-      students: 25,
-    },
-    {
-      id: 2,
-      subject: "Data Structures",
-      code: "CS302",
-      semester: 3,
-      section: "B",
-      students: 24,
-    },
-    {
-      id: 3,
-      subject: "Algorithm Design",
-      code: "CS303",
-      semester: 5,
-      section: "A",
-      students: 26,
-    },
-  ];
+  const classes = [];
 
   const examTypes = [
     {
@@ -81,48 +66,59 @@ const EnterMarks = () => {
     },
   ];
 
-  // Mock student data
-  const [students, setStudents] = useState([
-    {
-      id: 1,
-      usn: "1BI21CS001",
-      name: "Alice Johnson",
-      previousMarks: { ia1: 28, ia2: 26, ia3: 27 },
-    },
-    {
-      id: 2,
-      usn: "1BI21CS002",
-      name: "Bob Smith",
-      previousMarks: { ia1: 24, ia2: 25, ia3: 23 },
-    },
-    {
-      id: 3,
-      usn: "1BI21CS003",
-      name: "Charlie Brown",
-      previousMarks: { ia1: 22, ia2: 21, ia3: 23 },
-    },
-    {
-      id: 4,
-      usn: "1BI21CS004",
-      name: "Diana Prince",
-      previousMarks: { ia1: 29, ia2: 28, ia3: 27 },
-    },
-    {
-      id: 5,
-      usn: "1BI21CS005",
-      name: "Eve Adams",
-      previousMarks: { ia1: 18, ia2: 19, ia3: 20 },
-    },
-  ]);
+  const [students] = useState([]);
+
+  const calculateStats = useCallback(() => {
+    const marksArray = Object.values(marks).filter((m) => m !== "");
+    if (marksArray.length === 0) return;
+
+    const total = marksArray.reduce((a, b) => a + b, 0);
+    const avg = total / marksArray.length;
+    const high = Math.max(...marksArray);
+    const low = Math.min(...marksArray);
+
+    setStats({
+      total: students.length,
+      entered: marksArray.length,
+      average: Math.round(avg * 10) / 10,
+      highest: high,
+      lowest: low,
+    });
+  }, [marks, students.length]);
+
+  useEffect(() => {
+    calculateStats();
+  }, [calculateStats]);
 
   const handleMarkChange = (studentId, value) => {
+    const numValue = value === "" ? "" : parseInt(value);
+
     setMarks({
       ...marks,
-      [studentId]: value,
+      [studentId]: numValue,
     });
+
+    // Validate
+    const maxMarks = getMaxMarks();
+    if (numValue !== "" && (numValue < 0 || numValue > maxMarks)) {
+      setErrors({
+        ...errors,
+        [studentId]: `Marks must be between 0 and ${maxMarks}`,
+      });
+    } else {
+      const newErrors = { ...errors };
+      delete newErrors[studentId];
+      setErrors(newErrors);
+    }
   };
 
   const handleSubmit = () => {
+    // Check for validation errors
+    if (Object.keys(errors).length > 0) {
+      alert("Please fix validation errors before submitting");
+      return;
+    }
+
     setSubmitting(true);
     setTimeout(() => {
       setSubmitting(false);
@@ -138,245 +134,322 @@ const EnterMarks = () => {
     return examTypes.find((e) => e.id === selectedExam)?.maxMarks || 30;
   };
 
-  const getExamColor = () => {
-    return examTypes.find((e) => e.id === selectedExam)?.color || "bg-blue-500";
+  const getGradePrediction = (marks) => {
+    if (!marks) return null;
+    const percentage = (marks / getMaxMarks()) * 100;
+    if (percentage >= 90) return { grade: "O", color: "text-green-600" };
+    if (percentage >= 80) return { grade: "A+", color: "text-blue-600" };
+    if (percentage >= 70) return { grade: "A", color: "text-indigo-600" };
+    if (percentage >= 60) return { grade: "B+", color: "text-yellow-600" };
+    if (percentage >= 55) return { grade: "B", color: "text-orange-600" };
+    if (percentage >= 50) return { grade: "C", color: "text-purple-600" };
+    if (percentage >= 40) return { grade: "P", color: "text-gray-600" };
+    return { grade: "F", color: "text-red-600" };
   };
 
-  const validateMarks = (value) => {
-    const num = parseInt(value);
-    if (isNaN(num)) return true;
-    return num >= 0 && num <= getMaxMarks();
-  };
+  const ClassSelector = () => (
+    <div className="min-h-screen bg-gray-50">
+      <div className="modern-dashboard">
+        <div className="modern-header-clean">
+          <div>
+            <h1>Enter Marks</h1>
+            <p className="text-muted mt-1">Select a class to enter marks</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {classes.map((cls) => (
+            <div
+              key={cls.id}
+              onClick={() => setSelectedClass(cls)}
+              className="modern-card hover:shadow-lg transition-all cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
+                    {cls.subject}
+                  </h3>
+                  <p className="text-sm text-muted mt-1">
+                    {cls.code} • Semester {cls.semester} • Section {cls.section}
+                  </p>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-xl group-hover:bg-blue-100 transition">
+                  <AcademicCapIcon className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted">
+                  <CalculatorIcon className="w-4 h-4" />
+                  <span className="text-sm">{cls.students} students</span>
+                </div>
+                <span className="text-blue-600 text-sm font-medium group-hover:translate-x-1 transition">
+                  Select →
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   if (!selectedClass) {
-    return (
-      <div className="min-h-screen bg-gray-100">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto py-6 px-4">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <ChartBarIcon className="h-8 w-8 mr-3 text-blue-500" />
-              Select Class for Marks Entry
-            </h1>
-          </div>
-        </header>
-
-        <main className="max-w-7xl mx-auto py-6 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {classes.map((cls) => (
-              <div
-                key={cls.id}
-                onClick={() => setSelectedClass(cls)}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-blue-500"
-              >
-                <h3 className="text-lg font-semibold">{cls.subject}</h3>
-                <p className="text-sm text-gray-600">
-                  {cls.code} • Semester {cls.semester} • Section {cls.section}
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {cls.students} students
-                </p>
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
+    return <ClassSelector />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <div className="flex items-center">
+    <div className="min-h-screen bg-gray-50">
+      <div className="modern-dashboard">
+        {/* Header */}
+        <div className="modern-header-clean">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSelectedClass(null)}
-              className="mr-4 text-gray-600 hover:text-gray-900"
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
             >
-              <ArrowLeftIcon className="h-6 w-6" />
+              <ArrowLeftIcon className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Enter Marks</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {selectedClass.subject} ({selectedClass.code}) • Semester{" "}
-                {selectedClass.semester} • Section {selectedClass.section}
+              <h1>Enter Marks</h1>
+              <p className="flex items-center gap-2 mt-1">
+                <span className="font-medium text-gray-900">
+                  {selectedClass.subject}
+                </span>
+                <span className="badge badge-blue">{selectedClass.code}</span>
+                <span className="text-muted">
+                  Sem {selectedClass.semester} • Sec {selectedClass.section}
+                </span>
               </p>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4">
         {/* Success Message */}
         {success && (
-          <div className="mb-6 bg-green-50 border-l-4 border-green-400 p-4">
-            <div className="flex">
-              <CheckCircleIcon className="h-5 w-5 text-green-400" />
-              <div className="ml-3">
-                <p className="text-sm text-green-700">
-                  Marks saved successfully! Redirecting...
-                </p>
-              </div>
+          <div className="alert alert-success mb-6">
+            <div className="flex items-center gap-3">
+              <CheckCircleIcon className="w-5 h-5" />
+              <span>Marks saved successfully! Redirecting...</span>
             </div>
           </div>
         )}
 
         {/* Exam Type Selector */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">
-            Select Examination Type
-          </h2>
+        <div className="modern-card mb-6">
+          <h3 className="font-semibold text-gray-900 mb-4">
+            Select Examination
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
             {examTypes.map((exam) => (
               <button
                 key={exam.id}
                 onClick={() => setSelectedExam(exam.id)}
-                className={`p-3 rounded-lg text-white transition ${
+                className={`p-4 rounded-xl text-white transition-all ${
                   selectedExam === exam.id
-                    ? exam.color + " ring-2 ring-offset-2 ring-gray-400"
+                    ? exam.color + " ring-2 ring-offset-2 ring-blue-500"
                     : "bg-gray-400 hover:bg-gray-500"
                 }`}
               >
-                <div className="text-xs font-medium">{exam.name}</div>
-                <div className="text-lg font-bold mt-1">{exam.maxMarks}</div>
-                <div className="text-xs opacity-75">Max Marks</div>
+                <p className="text-xs font-medium opacity-90">{exam.name}</p>
+                <p className="text-2xl font-bold mt-2">{exam.maxMarks}</p>
+                <p className="text-xs opacity-75 mt-1">Max Marks</p>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Marks Entry Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b bg-gray-50">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Student Marks</h2>
-              <div className="text-sm text-gray-600">
-                Maximum Marks:{" "}
-                <span className="font-bold text-blue-600">{getMaxMarks()}</span>
+        {/* Statistics Cards */}
+        <div className="stats-grid mb-6">
+          <div className="stat-card-modern">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="stat-title">Entered</p>
+                <p className="stat-value">
+                  {stats.entered}/{students.length}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                <CheckCircleIcon className="w-6 h-6" />
               </div>
             </div>
           </div>
 
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  USN
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Student Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Previous IA
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Marks (Max: {getMaxMarks()})
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {students.map((student) => {
-                const currentMark = marks[student.id];
-                const isValid = validateMarks(currentMark);
-
-                return (
-                  <tr key={student.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {student.usn}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {selectedExam.includes("ia") ? (
-                        <span className="text-gray-600">
-                          IA1: {student.previousMarks.ia1} | IA2:{" "}
-                          {student.previousMarks.ia2} | IA3:{" "}
-                          {student.previousMarks.ia3}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <input
-                        type="number"
-                        min="0"
-                        max={getMaxMarks()}
-                        value={marks[student.id] || ""}
-                        onChange={(e) =>
-                          handleMarkChange(student.id, e.target.value)
-                        }
-                        className={`w-24 px-2 py-1 border rounded-md ${
-                          marks[student.id] && !isValid
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="Marks"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {marks[student.id] && isValid ? (
-                        <span className="text-green-600 text-sm">✓ Valid</span>
-                      ) : marks[student.id] && !isValid ? (
-                        <span className="text-red-600 text-sm">Invalid</span>
-                      ) : null}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Summary and Submit */}
-        <div className="mt-6 bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-600">
-                Total Students:{" "}
-                <span className="font-semibold">{students.length}</span>
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                Marks Entered:{" "}
-                <span className="font-semibold">
-                  {Object.keys(marks).length}
-                </span>
-              </p>
+          <div className="stat-card-modern">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="stat-title">Average</p>
+                <p className="stat-value">{stats.average}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-green-50 text-green-600">
+                <ChartBarIcon className="w-6 h-6" />
+              </div>
             </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setSelectedClass(null)}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting || Object.keys(marks).length === 0}
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
-              >
-                {submitting ? "Saving..." : "Save Marks"}
-              </button>
+          </div>
+
+          <div className="stat-card-modern">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="stat-title">Highest</p>
+                <p className="stat-value">{stats.highest}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
+                <AcademicCapIcon className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="stat-card-modern">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="stat-title">Lowest</p>
+                <p className="stat-value">{stats.lowest}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-orange-50 text-orange-600">
+                <CheckCircleIcon className="w-6 h-6" />
+              </div>
             </div>
           </div>
         </div>
 
+        {/* Marks Entry Table */}
+        <div className="modern-card">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-semibold text-gray-900">Student Marks</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted">Max Marks:</span>
+              <span className="badge badge-blue text-lg">{getMaxMarks()}</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {students.map((student) => {
+              const gradePrediction = getGradePrediction(marks[student.id]);
+              const hasError = errors[student.id];
+
+              return (
+                <div
+                  key={student.id}
+                  className={`p-4 rounded-xl transition-all ${
+                    hasError ? "bg-red-50" : "bg-gray-50 hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Student Info */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                            marks[student.id]
+                              ? "bg-blue-200 text-blue-700"
+                              : "bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {student.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {student.name}
+                          </p>
+                          <p className="text-sm text-muted">{student.usn}</p>
+                        </div>
+                      </div>
+
+                      {/* Previous Marks */}
+                      {selectedExam.includes("ia") && (
+                        <div className="mt-2 flex gap-2 text-xs">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                            IA1: {student.previousMarks.ia1}
+                          </span>
+                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded">
+                            IA2: {student.previousMarks.ia2}
+                          </span>
+                          <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">
+                            IA3: {student.previousMarks.ia3}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Marks Input */}
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min="0"
+                          max={getMaxMarks()}
+                          value={marks[student.id] || ""}
+                          onChange={(e) =>
+                            handleMarkChange(student.id, e.target.value)
+                          }
+                          className={`form-input w-24 text-center ${
+                            hasError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Marks"
+                        />
+                        {hasError && (
+                          <p className="absolute -bottom-5 left-0 text-xs text-red-500">
+                            {errors[student.id]}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Grade Prediction */}
+                      {marks[student.id] && !hasError && gradePrediction && (
+                        <div
+                          className={`px-3 py-1 rounded-lg font-semibold ${gradePrediction.color} bg-white shadow-sm`}
+                        >
+                          {gradePrediction.grade}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-6 flex justify-end gap-4 pt-6 border-t">
+            <button
+              onClick={() => setSelectedClass(null)}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || Object.keys(errors).length > 0}
+              className="btn btn-primary"
+            >
+              {submitting ? (
+                <>
+                  <div className="spinner w-4 h-4 mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                  Save Marks
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Instructions */}
-        <div className="mt-6 bg-blue-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">
-            📝 Instructions
-          </h3>
-          <ul className="text-xs text-blue-600 space-y-1">
+        <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+          <h4 className="text-sm font-medium text-blue-800 mb-2 flex items-center gap-2">
+            <CalculatorIcon className="w-4 h-4" />
+            Instructions
+          </h4>
+          <ul className="text-sm text-blue-600 space-y-1">
             <li>• Enter marks between 0 and {getMaxMarks()}</li>
             <li>• Invalid marks will be highlighted in red</li>
             <li>• Previous IA marks are shown for reference</li>
-            <li>• Click Save Marks to submit all entries</li>
+            <li>• Grade predictions are shown in real-time</li>
           </ul>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

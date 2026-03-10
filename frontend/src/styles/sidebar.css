@@ -1,0 +1,102 @@
+/* src/styles/sidebar.css */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 25px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-logo h2 {
+  color: #2563EB;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.sidebar-logo p {
+  color: #64748b;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  margin: 4px 8px;
+  border-radius: 8px;
+}
+
+.sidebar-link:hover {
+  background-color: #f8fafc;
+  color: #2563EB;
+}
+
+.sidebar-link.active {
+  background-color: #2563EB;
+  color: white;
+}
+
+.sidebar-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 1.2rem;
+}
+
+.sidebar-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.sidebar-link.logout {
+  color: #EF4444;
+}
+
+.sidebar-link.logout:hover {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+/* Scrollbar */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}

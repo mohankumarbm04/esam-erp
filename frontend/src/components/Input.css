@@ -1,0 +1,52 @@
+/* src/components/Input.css */
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1F2937;
+  margin-bottom: 6px;
+}
+
+.required {
+  color: #EF4444;
+  margin-left: 2px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.input-field.input-error {
+  border-color: #EF4444;
+}
+
+.input-field.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.input-field:disabled {
+  background: #F8FAFC;
+  cursor: not-allowed;
+}
+
+.input-error-message {
+  display: block;
+  color: #EF4444;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}

@@ -238,8 +238,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
 
 // @route   PUT /api/subjects/:id
 // @desc    Update subject
-// @access  Private (Admin or HOD)
-router.put("/:id", authMiddleware, isHOD, async (req, res) => {
+// @access  Private (Admin only)
+router.put("/:id", authMiddleware, isAdmin, async (req, res) => {
   try {
     console.log("📝 Updating subject:", req.params.id);
 
@@ -293,6 +293,37 @@ router.put("/:id", authMiddleware, isHOD, async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+});
+
+// @route   DELETE /api/subjects/:id
+// @desc    Delete subject
+// @access  Private (Admin only)
+router.delete("/:id", authMiddleware, isAdmin, async (req, res) => {
+  try {
+    console.log("🗑️ Deleting subject:", req.params.id);
+
+    let subject;
+    if (
+      req.params.id.length === 24 &&
+      /^[0-9a-fA-F]{24}$/.test(req.params.id)
+    ) {
+      subject = await Subject.findById(req.params.id);
+    } else {
+      subject = await Subject.findOne({
+        subjectCode: req.params.id.toUpperCase(),
+      });
+    }
+
+    if (!subject) {
+      return res.status(404).json({ success: false, error: "Subject not found" });
+    }
+
+    await Subject.deleteOne({ _id: subject._id });
+    res.json({ success: true, message: "Subject deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting subject:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

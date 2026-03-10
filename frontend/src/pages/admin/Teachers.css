@@ -1,0 +1,229 @@
+/* Teachers.css - Styles for Admin Teachers Page */
+
+.stat-card-modern {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-title {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.trend-up {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.modern-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.badge-green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.badge-yellow {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border-left: 4px solid #ef4444;
+}
+
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.modern-table th {
+  background: #f8fafc;
+  padding: 16px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modern-table td {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  color: #1f2937;
+}
+
+.modern-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.text-muted {
+  color: #6b7280;
+}
+
+.font-mono {
+  font-family: monospace;
+}
+
+/* Grid layouts */
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-cols-1 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid-cols-2, .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

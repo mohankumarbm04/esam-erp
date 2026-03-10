@@ -1,0 +1,139 @@
+/* ==========================================================================
+   ESAM-ERP CSS System — dashboard.css
+   - Widgets (stats cards, charts, activity)
+   - Dashboard-specific grids
+   ========================================================================== */
+
+/* Stats grid used in multiple pages */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.stat-card,
+.stat-card-modern {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-5);
+  box-shadow: var(--shadow-sm);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.stat-card:hover,
+.stat-card-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.stat-card-title,
+.stat-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  font-weight: 800;
+}
+
+.stat-card-value,
+.stat-value {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+}
+
+.stat-trend {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.trend-up {
+  color: var(--success);
+  font-weight: 800;
+}
+.trend-down {
+  color: var(--warning);
+  font-weight: 800;
+}
+
+/* Chart containers */
+.chart-box,
+.chart-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--s-6);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Activity list */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.activity-item:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.activity-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: var(--text-inverse);
+  background: var(--secondary);
+}
+
+.activity-content {
+  min-width: 0;
+}
+
+.activity-action {
+  color: var(--text-primary);
+}
+
+.activity-meta {
+  color: var(--text-secondary);
+  font-size: 12px;
+}

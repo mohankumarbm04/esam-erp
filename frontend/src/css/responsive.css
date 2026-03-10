@@ -1,0 +1,61 @@
+/* ==========================================================================
+   ESAM-ERP CSS System — responsive.css
+   - Breakpoints
+   - Mobile sidebar toggle support
+   - Responsive tables / grids
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .dashboard-shell {
+    grid-template-columns: 84px 1fr;
+  }
+
+  .sidebar {
+    padding: var(--s-4) var(--s-3);
+  }
+
+  .content,
+  .modern-dashboard {
+    padding: var(--s-5);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .container {
+    padding: 0 var(--s-4);
+  }
+
+  .topbar-inner {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .content,
+  .modern-dashboard {
+    padding: var(--s-4);
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Responsive table wrapper */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modern-table {
+    min-width: 720px;
+  }
+
+  /* Login */
+  .login-card {
+    padding: 22px;
+  }
+}

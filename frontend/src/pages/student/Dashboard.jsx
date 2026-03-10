@@ -1,149 +1,127 @@
 // pages/student/Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/axiosConfig";
 import {
   AcademicCapIcon,
   ChartBarIcon,
   CalendarIcon,
   DocumentTextIcon,
-  UserCircleIcon,
   BellIcon,
   BookOpenIcon,
   ClockIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
   const [stats, setStats] = useState({
-    attendance: 92,
-    sgpa: 8.5,
-    cgpa: 8.2,
-    completedCredits: 48,
-    totalCredits: 72,
+    attendance: 0,
+    sgpa: 0,
+    cgpa: 0,
+    completedCredits: 0,
+    totalCredits: 0,
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchStudentData();
-    fetchRecentActivities();
-    fetchUpcomingClasses();
-    fetchNotifications();
+    let isMounted = true;
+
+    const load = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      setError("");
+
+      await Promise.all([
+        fetchStudentData(),
+        fetchStats(),
+        fetchRecentActivities(),
+        fetchUpcomingClasses(),
+        fetchNotifications(),
+      ]);
+
+      if (!isMounted) return;
+      setLoading(false);
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const fetchStudentData = async () => {
-    // Mock student data - replace with API call
-    setStudent({
-      name: "Alice Johnson",
-      usn: "1BI21CS001",
-      department: "Computer Science",
-      semester: 3,
-      section: "A",
-      email: "alice.j@esam.edu",
-      phone: "9876543210",
-      profileImage: null,
-    });
+    try {
+      const response = await api.get("/students/profile/me");
+      setStudent(response.data.student || null);
+    } catch (err) {
+      console.error("Error fetching student:", err);
+      setError("Failed to load student data");
+      setStudent(null);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get("/students/stats/me");
+      setStats(response.data || {});
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+      setStats({
+        attendance: 0,
+        sgpa: 0,
+        cgpa: 0,
+        completedCredits: 0,
+        totalCredits: 0,
+      });
+    }
   };
 
   const fetchRecentActivities = async () => {
-    setRecentActivities([
-      {
-        id: 1,
-        action: "Attendance marked for CS301",
-        date: "Today",
-        time: "09:00 AM",
-        status: "present",
-        icon: "✅",
-      },
-      {
-        id: 2,
-        action: "IA1 marks published for CS302",
-        date: "Yesterday",
-        time: "02:30 PM",
-        details: "Marks: 26/30",
-        icon: "📊",
-      },
-      {
-        id: 3,
-        action: "SGPA for Semester 3 calculated",
-        date: "2 days ago",
-        time: "11:15 AM",
-        details: "SGPA: 8.5",
-        icon: "🎯",
-      },
-      {
-        id: 4,
-        action: "Document verified: 10th Marks Card",
-        date: "1 week ago",
-        time: "03:45 PM",
-        status: "verified",
-        icon: "✅",
-      },
-    ]);
+    try {
+      const response = await api.get("/students/activities");
+      setRecentActivities(response.data.activities || []);
+    } catch (err) {
+      console.error("Error fetching activities:", err);
+      setRecentActivities([]);
+    }
   };
 
   const fetchUpcomingClasses = async () => {
-    setUpcomingClasses([
-      {
-        id: 1,
-        subject: "Database Management Systems",
-        code: "CS301",
-        time: "09:00 - 10:00",
-        room: "LH-101",
-        teacher: "Dr. Rajesh Kumar",
-        type: "Theory",
-      },
-      {
-        id: 2,
-        subject: "Data Structures",
-        code: "CS302",
-        time: "10:15 - 11:15",
-        room: "LH-102",
-        teacher: "Prof. Sunita Sharma",
-        type: "Theory",
-      },
-      {
-        id: 3,
-        subject: "DBMS Lab",
-        code: "CS351",
-        time: "14:00 - 17:00",
-        room: "Lab-3",
-        teacher: "Dr. Rajesh Kumar",
-        type: "Lab",
-      },
-    ]);
+    try {
+      const response = await api.get("/students/today-classes");
+      setUpcomingClasses(response.data.classes || []);
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+      setUpcomingClasses([]);
+    }
   };
 
   const fetchNotifications = async () => {
-    setNotifications([
-      {
-        id: 1,
-        title: "Assignment Due",
-        message: "CS301 Assignment submission by Friday",
-        type: "warning",
-        time: "2 hours ago",
-      },
-      {
-        id: 2,
-        title: "Attendance Alert",
-        message: "Your attendance in CS302 is 78%",
-        type: "info",
-        time: "1 day ago",
-      },
-    ]);
+    try {
+      const response = await api.get("/students/notifications");
+      setNotifications(response.data.notifications || []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setNotifications([]);
+    }
   };
 
   const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
-    <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition card-hover">
+    <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
           {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
         </div>
-        <div className={`p-4 rounded-xl ${color} shadow-lg`}>
+        <div className={`p-3 rounded-lg ${color}`}>
           <Icon className="h-6 w-6 text-white" />
         </div>
       </div>
@@ -165,85 +143,105 @@ const StudentDashboard = () => {
     );
   };
 
-  if (!student) {
+  const getActivityIcon = (type) => {
+    switch (type) {
+      case "attendance":
+        return "📅";
+      case "marks":
+        return "📊";
+      case "sgpa":
+        return "🎯";
+      case "document":
+        return "📄";
+      default:
+        return "📌";
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading dashboard...</div>
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-xl">Error loading dashboard</p>
+          <p className="mt-2">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Student Portal
-              </h1>
-            </div>
+            <h1 className="text-xl font-semibold text-gray-800">
+              Student Portal
+            </h1>
 
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                <BellIcon className="h-6 w-6" />
+              <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg relative">
+                <BellIcon className="h-5 w-5" />
                 {notifications.length > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    {notifications.length}
-                  </span>
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                 )}
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                  {student.name.charAt(0)}
+                <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                  {student?.name?.charAt(0) || "S"}
                 </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-700">
-                    {student.name}
-                  </p>
-                  <p className="text-xs text-gray-500">{student.usn}</p>
-                </div>
+                <span className="text-sm font-medium text-gray-700 hidden md:block">
+                  {student?.name?.split(" ")[0] || "Student"}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 mb-8 text-white">
-          <h2 className="text-2xl font-bold">
-            Welcome back, {student.name}! 👋
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+          <h2 className="text-2xl font-bold mb-2">
+            Welcome back, {student?.name?.split(" ")[0] || "Student"}! 👋
           </h2>
-          <p className="text-blue-100 mt-2">
+          <p className="text-blue-100">
             Here's your academic summary for today.
           </p>
         </div>
 
         {/* Student Info Card */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center">
-              <div className="h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-3xl">
-                {student.name.charAt(0)}
-              </div>
-              <div className="ml-4">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {student.name}
-                </h2>
-                <p className="text-gray-600">{student.usn}</p>
-                <div className="flex items-center mt-2 text-sm text-gray-500">
-                  <AcademicCapIcon className="h-4 w-4 mr-1" />
-                  {student.department} • Semester {student.semester} • Section{" "}
-                  {student.section}
-                </div>
-              </div>
+        <div className="bg-white rounded-lg shadow p-6 mb-8 border border-gray-100">
+          <div className="flex items-center">
+            <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center">
+              <UserCircleIcon className="h-10 w-10 text-blue-600" />
             </div>
-            <div className="mt-4 md:mt-0 flex space-x-2">
-              <button className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100">
-                View Profile
-              </button>
+            <div className="ml-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {student?.name}
+              </h2>
+              <p className="text-sm text-gray-600">{student?.usn}</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {student?.department} • Semester {student?.semester} • Section{" "}
+                {student?.section}
+              </p>
             </div>
           </div>
         </div>
@@ -251,10 +249,10 @@ const StudentDashboard = () => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
-            title="Overall Attendance"
+            title="Attendance"
             value={`${stats.attendance}%`}
             icon={CalendarIcon}
-            color="bg-gradient-to-r from-green-500 to-green-600"
+            color="bg-green-500"
             subtitle={
               stats.attendance >= 75 ? "Meeting requirement" : "Below 75%"
             }
@@ -263,30 +261,34 @@ const StudentDashboard = () => {
             title="Current SGPA"
             value={stats.sgpa}
             icon={ChartBarIcon}
-            color="bg-gradient-to-r from-blue-500 to-blue-600"
-            subtitle="Semester 3"
+            color="bg-blue-500"
+            subtitle={`Semester ${student?.semester}`}
           />
           <StatCard
             title="CGPA"
             value={stats.cgpa}
             icon={AcademicCapIcon}
-            color="bg-gradient-to-r from-purple-500 to-purple-600"
+            color="bg-purple-500"
             subtitle="Overall"
           />
           <StatCard
             title="Credits Earned"
             value={`${stats.completedCredits}/${stats.totalCredits}`}
             icon={BookOpenIcon}
-            color="bg-gradient-to-r from-orange-500 to-orange-600"
-            subtitle="48 completed"
+            color="bg-orange-500"
+            subtitle={`${stats.completedCredits} completed`}
           />
         </div>
 
         {/* Main Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Today's Classes */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Today's Schedule</h2>
+          <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <ClockIcon className="h-5 w-5 mr-2 text-blue-500" />
+              Today's Schedule
+            </h2>
+
             <div className="space-y-4">
               {upcomingClasses.map((cls) => (
                 <div
@@ -296,7 +298,9 @@ const StudentDashboard = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center">
-                        <h3 className="font-semibold">{cls.subject}</h3>
+                        <h3 className="font-semibold text-gray-900">
+                          {cls.subject}
+                        </h3>
                         <span className="ml-3 px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded-full">
                           {cls.type}
                         </span>
@@ -324,51 +328,59 @@ const StudentDashboard = () => {
                 </div>
               ))}
             </div>
-            <button className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
+
+            <button
+              onClick={() => navigate("/student/timetable")}
+              className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
               View Full Schedule →
             </button>
           </div>
 
-          {/* Quick Actions & Notifications */}
+          {/* Right Sidebar */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+            <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Quick Actions
+              </h2>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => navigate("/student/attendance")}
-                  className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center"
+                  className="p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center"
                 >
-                  <CalendarIcon className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                  <span className="text-sm">Attendance</span>
+                  <CalendarIcon className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+                  <span className="text-xs font-medium">Attendance</span>
                 </button>
                 <button
                   onClick={() => navigate("/student/marks")}
-                  className="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition text-center"
+                  className="p-3 bg-green-50 rounded-lg hover:bg-green-100 transition text-center"
                 >
-                  <ChartBarIcon className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                  <span className="text-sm">Marks</span>
+                  <ChartBarIcon className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                  <span className="text-xs font-medium">Marks</span>
                 </button>
                 <button
                   onClick={() => navigate("/student/transcript")}
-                  className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition text-center"
+                  className="p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition text-center"
                 >
-                  <DocumentTextIcon className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                  <span className="text-sm">Transcript</span>
+                  <DocumentTextIcon className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                  <span className="text-xs font-medium">Transcript</span>
                 </button>
                 <button
                   onClick={() => navigate("/student/documents")}
-                  className="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition text-center"
+                  className="p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition text-center"
                 >
-                  <AcademicCapIcon className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-                  <span className="text-sm">Documents</span>
+                  <BookOpenIcon className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+                  <span className="text-xs font-medium">Documents</span>
                 </button>
               </div>
             </div>
 
             {/* Notifications */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Notifications</h2>
+            <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                Notifications
+              </h2>
               <div className="space-y-3">
                 {notifications.map((notif) => (
                   <div key={notif.id} className="bg-gray-50 rounded-lg p-3">
@@ -392,16 +404,18 @@ const StudentDashboard = () => {
         </div>
 
         {/* Recent Activities */}
-        <div className="mt-6 bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Activities</h2>
+        <div className="mt-6 bg-white rounded-lg shadow p-6 border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Recent Activities
+          </h2>
           <div className="space-y-4">
             {recentActivities.map((activity) => (
               <div
                 key={activity.id}
                 className="flex items-start space-x-3 border-b border-gray-100 pb-4 last:border-0"
               >
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center text-xl">
-                  {activity.icon}
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm">
+                  {getActivityIcon(activity.type)}
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">

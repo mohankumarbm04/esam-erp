@@ -48,7 +48,7 @@ export const authAPI = {
 // ==================== ADMIN APIs ====================
 export const adminAPI = {
   // Dashboard stats
-  getStats: () => api.get("/admin/stats"),
+  getStats: () => api.get("/dashboard/stats"),
 
   // Departments
   getDepartments: () => api.get("/departments"),

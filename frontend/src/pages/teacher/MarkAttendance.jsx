@@ -1,5 +1,5 @@
 // pages/teacher/MarkAttendance.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   CheckCircleIcon,
@@ -7,6 +7,10 @@ import {
   CalendarIcon,
   UserGroupIcon,
   ArrowLeftIcon,
+  AcademicCapIcon,
+  MagnifyingGlassIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 
 const MarkAttendance = () => {
@@ -19,43 +23,14 @@ const MarkAttendance = () => {
     new Date().toISOString().split("T")[0],
   );
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
+  const [sortOrder, setSortOrder] = useState("asc");
 
-  const classes = [
-    {
-      id: 1,
-      subject: "Database Management Systems",
-      code: "CS301",
-      semester: 3,
-      section: "A",
-      students: 25,
-    },
-    {
-      id: 2,
-      subject: "Data Structures",
-      code: "CS302",
-      semester: 3,
-      section: "B",
-      students: 24,
-    },
-    {
-      id: 3,
-      subject: "Algorithm Design",
-      code: "CS303",
-      semester: 5,
-      section: "A",
-      students: 26,
-    },
-    {
-      id: 4,
-      subject: "DBMS Lab",
-      code: "CS351",
-      semester: 3,
-      section: "A",
-      students: 25,
-    },
-  ];
+  const classes = [];
 
   useEffect(() => {
     if (selectedClass) {
@@ -65,43 +40,78 @@ const MarkAttendance = () => {
 
   const fetchStudents = async () => {
     setLoading(true);
-    // Mock student data
-    setTimeout(() => {
-      setStudents([
-        { id: 1, usn: "1BI21CS001", name: "Alice Johnson", status: "present" },
-        { id: 2, usn: "1BI21CS002", name: "Bob Smith", status: "present" },
-        { id: 3, usn: "1BI21CS003", name: "Charlie Brown", status: "absent" },
-        { id: 4, usn: "1BI21CS004", name: "Diana Prince", status: "present" },
-        { id: 5, usn: "1BI21CS005", name: "Eve Adams", status: "absent" },
-        { id: 6, usn: "1BI21CS006", name: "Frank Castle", status: "present" },
-        { id: 7, usn: "1BI21CS007", name: "Grace Hopper", status: "present" },
-        { id: 8, usn: "1BI21CS008", name: "Henry Cavill", status: "absent" },
-      ]);
-      setLoading(false);
-    }, 500);
+    setStudents([]);
+    setLoading(false);
   };
 
+  const filterAndSortStudents = useCallback(() => {
+    let filtered = [...students];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (s) =>
+          s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          s.usn.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+    }
+
+    // Apply sort
+    filtered.sort((a, b) => {
+      const comparison = a.name.localeCompare(b.name);
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    setFilteredStudents(filtered);
+  }, [students, searchTerm, sortOrder]);
+
+  useEffect(() => {
+    filterAndSortStudents();
+  }, [filterAndSortStudents]);
+
   const handleAttendanceChange = (studentId, status) => {
-    setStudents(
-      students.map((s) => (s.id === studentId ? { ...s, status } : s)),
+    const updatedStudents = students.map((s) =>
+      s.id === studentId ? { ...s, status } : s,
     );
+    setStudents(updatedStudents);
+    setSelectAll(false);
+  };
+
+  const handleSelectAll = () => {
+    const newStatus = !selectAll ? "present" : "absent";
+    const updatedStudents = filteredStudents.map((s) => ({
+      ...s,
+      status: newStatus,
+    }));
+
+    // Update only filtered students, preserve others
+    const otherStudents = students.filter(
+      (s) => !filteredStudents.find((fs) => fs.id === s.id),
+    );
+    setStudents([...otherStudents, ...updatedStudents]);
+    setSelectAll(!selectAll);
   };
 
   const markAllPresent = () => {
-    setStudents(students.map((s) => ({ ...s, status: "present" })));
+    const updatedStudents = students.map((s) => ({ ...s, status: "present" }));
+    setStudents(updatedStudents);
+    setSelectAll(true);
   };
 
   const markAllAbsent = () => {
-    setStudents(students.map((s) => ({ ...s, status: "absent" })));
+    const updatedStudents = students.map((s) => ({ ...s, status: "absent" }));
+    setStudents(updatedStudents);
+    setSelectAll(false);
   };
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      alert("Attendance marked successfully!");
+    try {
+      // TODO: send attendance to backend when endpoint is available
       navigate("/teacher/dashboard");
-    }, 1500);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStats = () => {
@@ -114,101 +124,115 @@ const MarkAttendance = () => {
 
   const stats = getStats();
 
-  if (!selectedClass) {
-    return (
-      <div className="min-h-screen bg-gray-100">
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto py-6 px-4">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <CalendarIcon className="h-8 w-8 mr-3 text-blue-500" />
-              Select Class for Attendance
-            </h1>
+  const ClassSelector = () => (
+    <div className="min-h-screen bg-gray-50">
+      <div className="modern-dashboard">
+        <div className="modern-header-clean">
+          <div>
+            <h1>Mark Attendance</h1>
+            <p className="text-muted mt-1">Select a class to mark attendance</p>
           </div>
-        </header>
+        </div>
 
-        <main className="max-w-7xl mx-auto py-6 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {classes.map((cls) => (
-              <div
-                key={cls.id}
-                onClick={() => setSelectedClass(cls)}
-                className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer border-2 border-transparent hover:border-blue-500"
-              >
-                <h3 className="text-lg font-semibold">{cls.subject}</h3>
-                <p className="text-sm text-gray-600">
-                  {cls.code} • Semester {cls.semester} • Section {cls.section}
-                </p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {cls.students} students
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {classes.map((cls) => (
+            <div
+              key={cls.id}
+              onClick={() => setSelectedClass(cls)}
+              className="modern-card hover:shadow-lg transition-all cursor-pointer group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600">
+                    {cls.subject}
+                  </h3>
+                  <p className="text-sm text-muted mt-1">
+                    {cls.code} • Semester {cls.semester} • Section {cls.section}
+                  </p>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-xl group-hover:bg-blue-100 transition">
+                  <UserGroupIcon className="w-6 h-6 text-blue-600" />
+                </div>
               </div>
-            ))}
-          </div>
-        </main>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted">
+                  <AcademicCapIcon className="w-4 h-4" />
+                  <span className="text-sm">{cls.students} students</span>
+                </div>
+                <span className="text-blue-600 text-sm font-medium group-hover:translate-x-1 transition">
+                  Select →
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    );
+    </div>
+  );
+
+  if (!selectedClass) {
+    return <ClassSelector />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <div className="flex items-center">
+    <div className="min-h-screen bg-gray-50">
+      <div className="modern-dashboard">
+        {/* Header */}
+        <div className="modern-header-clean">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSelectedClass(null)}
-              className="mr-4 text-gray-600 hover:text-gray-900"
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
             >
-              <ArrowLeftIcon className="h-6 w-6" />
+              <ArrowLeftIcon className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Mark Attendance
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {selectedClass.subject} ({selectedClass.code}) • Semester{" "}
-                {selectedClass.semester} • Section {selectedClass.section}
+              <h1>Mark Attendance</h1>
+              <p className="flex items-center gap-2 mt-1">
+                <span className="font-medium text-gray-900">
+                  {selectedClass.subject}
+                </span>
+                <span className="badge badge-blue">{selectedClass.code}</span>
+                <span className="text-muted">
+                  Sem {selectedClass.semester} • Sec {selectedClass.section}
+                </span>
               </p>
             </div>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Date Selector and Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Date
-                </label>
+        {/* Date & Controls */}
+        <div className="modern-card mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="w-5 h-5 text-muted" />
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  className="form-input py-2"
                 />
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <button
                   onClick={markAllPresent}
-                  className="px-4 py-2 bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+                  className="btn btn-success py-2"
                 >
-                  Mark All Present
+                  <CheckCircleIcon className="w-4 h-4 mr-2" />
+                  All Present
                 </button>
-                <button
-                  onClick={markAllAbsent}
-                  className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200"
-                >
-                  Mark All Absent
+                <button onClick={markAllAbsent} className="btn btn-danger py-2">
+                  <XCircleIcon className="w-4 h-4 mr-2" />
+                  All Absent
                 </button>
               </div>
             </div>
 
-            {/* Stats Summary */}
-            <div className="flex space-x-6">
+            {/* Stats */}
+            <div className="flex items-center gap-6">
               <div className="text-center">
-                <p className="text-sm text-gray-600">Total</p>
+                <p className="text-sm text-muted">Total</p>
                 <p className="text-xl font-semibold">{stats.total}</p>
               </div>
               <div className="text-center">
@@ -224,7 +248,7 @@ const MarkAttendance = () => {
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-sm text-blue-600">Percentage</p>
+                <p className="text-sm text-muted">%</p>
                 <p className="text-xl font-semibold text-blue-600">
                   {stats.percentage}%
                 </p>
@@ -233,92 +257,164 @@ const MarkAttendance = () => {
           </div>
         </div>
 
+        {/* Search & Filter */}
+        <div className="modern-card mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted" />
+              <input
+                type="text"
+                placeholder="Search students by name or USN..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-input pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
+                className="btn btn-secondary"
+              >
+                Sort Name
+                {sortOrder === "asc" ? (
+                  <ChevronUpIcon className="w-4 h-4 ml-2" />
+                ) : (
+                  <ChevronDownIcon className="w-4 h-4 ml-2" />
+                )}
+              </button>
+              <button
+                onClick={handleSelectAll}
+                className={`btn ${selectAll ? "btn-danger" : "btn-success"}`}
+              >
+                {selectAll ? "Clear All" : "Select All Present"}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Attendance Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="modern-card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Student List</h3>
+            <p className="text-sm text-muted">
+              {filteredStudents.length} students
+            </p>
+          </div>
+
           {loading ? (
-            <div className="p-8 text-center">Loading students...</div>
+            <div className="flex justify-center py-12">
+              <div className="spinner"></div>
+            </div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    USN
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Student Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Attendance Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {students.map((student) => (
-                  <tr key={student.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {student.usn}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {student.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+            <div className="space-y-3">
+              {filteredStudents.map((student) => (
+                <div
+                  key={student.id}
+                  className={`p-4 rounded-xl transition-all ${
+                    student.status === "present"
+                      ? "bg-green-50 border border-green-200"
+                      : "bg-red-50 border border-red-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
                           student.status === "present"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-200 text-green-700"
+                            : "bg-red-200 text-red-700"
                         }`}
                       >
-                        {student.status === "present" ? "Present" : "Absent"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {student.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {student.name}
+                        </p>
+                        <p className="text-sm text-muted">{student.usn}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <button
                         onClick={() =>
                           handleAttendanceChange(student.id, "present")
                         }
-                        className={`mr-2 p-1 rounded ${
+                        className={`p-2 rounded-lg transition ${
                           student.status === "present"
-                            ? "text-green-600 bg-green-100"
-                            : "text-gray-400 hover:text-green-600"
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-green-100"
                         }`}
                       >
-                        <CheckCircleIcon className="h-5 w-5" />
+                        <CheckCircleIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() =>
                           handleAttendanceChange(student.id, "absent")
                         }
-                        className={`p-1 rounded ${
+                        className={`p-2 rounded-lg transition ${
                           student.status === "absent"
-                            ? "text-red-600 bg-red-100"
-                            : "text-gray-400 hover:text-red-600"
+                            ? "bg-red-500 text-white"
+                            : "bg-gray-200 text-gray-600 hover:bg-red-100"
                         }`}
                       >
-                        <XCircleIcon className="h-5 w-5" />
+                        <XCircleIcon className="w-5 h-5" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {filteredStudents.length === 0 && (
+                <div className="text-center py-12">
+                  <UserGroupIcon className="w-12 h-12 mx-auto text-muted mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900">
+                    No students found
+                  </h3>
+                  <p className="text-muted mt-2">Try adjusting your search</p>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
         {/* Submit Button */}
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end gap-4">
+          <button
+            onClick={() => setSelectedClass(null)}
+            className="btn btn-secondary"
+          >
+            Cancel
+          </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || loading}
-            className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50"
+            disabled={submitting}
+            className="btn btn-primary"
           >
-            {submitting ? "Submitting..." : "Submit Attendance"}
+            {submitting ? (
+              <>
+                <div className="spinner w-4 h-4 mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckCircleIcon className="w-5 h-5 mr-2" />
+                Submit Attendance
+              </>
+            )}
           </button>
         </div>
-      </main>
+
+        {/* Summary */}
+        <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+          <p className="text-sm text-blue-700 flex items-center gap-2">
+            <span className="text-lg">📊</span>
+            Summary: {stats.present} present, {stats.absent} absent (
+            {stats.percentage}% attendance)
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

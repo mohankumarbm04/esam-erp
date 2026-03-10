@@ -1,0 +1,69 @@
+/* src/styles/tables.css */
+.table-container {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table thead tr {
+  background: #F8FAFC;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+  text-align: left;
+  padding: 16px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  padding: 16px;
+  color: #1F2937;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Striped */
+.table-striped tbody tr:nth-child(even) {
+  background-color: #F8FAFC;
+}
+
+/* Hover */
+.table-hover tbody tr:hover {
+  background-color: #F1F5F9;
+  transition: background 0.3s;
+}
+
+/* Bordered */
+.table-bordered td,
+.table-bordered th {
+  border: 1px solid #e2e8f0;
+}
+
+/* Compact */
+.table-compact td,
+.table-compact th {
+  padding: 8px 12px;
+}
+
+/* Empty state */
+.table-empty {
+  text-align: center;
+  padding: 40px !important;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}

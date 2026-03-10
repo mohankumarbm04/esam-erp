@@ -2,32 +2,43 @@
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
-  try {
-    // Get token from header
-    const token = req.header("Authorization")?.replace("Bearer ", "");
+  console.log("\n🔐 ===== AUTH MIDDLEWARE =====");
+  console.log("📨 Headers:", req.headers);
 
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "Access denied. No token provided.",
-      });
+  try {
+    const authHeader = req.header("Authorization");
+
+    if (!authHeader) {
+      console.log("❌ No Authorization header");
+      return res.status(401).json({ error: "No token provided" });
     }
 
-    // Verify token
+    const token = authHeader.replace("Bearer ", "");
+    console.log(
+      "🔑 Token received (first 20 chars):",
+      token.substring(0, 20) + "...",
+    );
+
+    // Verify JWT token
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET || "esam-erp-secret-key-2026",
     );
 
-    // Add user info to request
-    req.user = decoded;
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+      name: decoded.username || decoded.name || undefined,
+    };
+    console.log("✅ User set:", req.user);
+    console.log("🔐 ===== AUTH SUCCESS =====\n");
+
     next();
   } catch (error) {
-    console.error("❌ Auth middleware error:", error);
-    res.status(401).json({
-      success: false,
-      error: "Invalid token",
-    });
+    console.error("❌ Auth error:", error.message);
+    console.log("🔐 ===== AUTH FAILED =====\n");
+    return res.status(401).json({ error: "Invalid token" });
   }
 };
 

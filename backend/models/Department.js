@@ -7,10 +7,6 @@ const departmentSchema = new mongoose.Schema(
       type: String,
       required: [true, "Department name is required"],
       unique: true,
-      enum: {
-        values: ["CSE", "ISE", "ECE", "EEE", "ME", "CV", "AIML", "DS", "CIVIL"],
-        message: "{VALUE} is not a valid department",
-      },
     },
     code: {
       type: String,

@@ -1,0 +1,82 @@
+/* ==========================================================================
+   ESAM-ERP CSS System — tables.css
+   - ERP data tables
+   - Zebra rows / hover
+   - Responsive wrappers
+   ========================================================================== */
+
+.table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.modern-table thead th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.modern-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.modern-table tbody tr:nth-child(even) {
+  background: rgba(226, 232, 240, 0.35);
+}
+
+.dark-mode .modern-table tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.modern-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.modern-table .text-center {
+  text-align: center;
+}
+
+/* Pagination (generic) */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.pagination .page-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.pagination .page-btn:hover {
+  background: var(--surface-2);
+}
+
+.pagination .page-btn.active {
+  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+}

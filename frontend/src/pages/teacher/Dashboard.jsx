@@ -1,6 +1,5 @@
 // pages/teacher/Dashboard.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpenIcon,
@@ -11,6 +10,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   UserGroupIcon,
+  PresentationChartBarIcon,
+  ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 
 const TeacherDashboard = () => {
@@ -26,7 +27,6 @@ const TeacherDashboard = () => {
   const [teacher, setTeacher] = useState(null);
 
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
   useEffect(() => {
@@ -36,23 +36,18 @@ const TeacherDashboard = () => {
   }, []);
 
   const fetchTeacherData = async () => {
-    try {
-      // Mock data - replace with actual API call
-      setTeacher({
-        name: user.name || "Dr. Rajesh Kumar",
-        department: "Computer Science",
-        email: "rajesh.k@cse.edu",
-        phone: "9876543210",
-      });
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching teacher data:", error);
-      setLoading(false);
-    }
+    setTeacher({
+      name: user.name || "Dr. Rajesh Kumar",
+      department: "Computer Science",
+      email: "rajesh.k@cse.edu",
+      phone: "9876543210",
+      employeeId: "TCH001",
+      designation: "Professor",
+    });
+    setLoading(false);
   };
 
   const fetchTodayClasses = async () => {
-    // Mock data - replace with API call
     setTodayClasses([
       {
         id: 1,
@@ -64,6 +59,7 @@ const TeacherDashboard = () => {
         room: "LH-101",
         students: 25,
         attendanceMarked: true,
+        type: "Theory",
       },
       {
         id: 2,
@@ -75,6 +71,7 @@ const TeacherDashboard = () => {
         room: "LH-102",
         students: 24,
         attendanceMarked: false,
+        type: "Theory",
       },
       {
         id: 3,
@@ -86,6 +83,7 @@ const TeacherDashboard = () => {
         room: "LH-103",
         students: 26,
         attendanceMarked: true,
+        type: "Theory",
       },
       {
         id: 4,
@@ -97,6 +95,7 @@ const TeacherDashboard = () => {
         room: "Lab-3",
         students: 25,
         attendanceMarked: false,
+        type: "Lab",
       },
     ]);
   };
@@ -108,255 +107,326 @@ const TeacherDashboard = () => {
         action: "Marked attendance for CS301",
         time: "2 hours ago",
         status: "completed",
+        class: "CS301",
       },
       {
         id: 2,
         action: "Entered IA1 marks for CS302",
         time: "5 hours ago",
         status: "completed",
+        class: "CS302",
       },
       {
         id: 3,
-        action: "Pending: Mark attendance for CS351",
+        action: "Mark attendance for CS351",
         time: "Due today",
         status: "pending",
+        class: "CS351",
+        priority: "high",
       },
       {
         id: 4,
-        action: "Pending: Enter IA2 marks for CS303",
+        action: "Enter IA2 marks for CS303",
         time: "Due tomorrow",
         status: "pending",
+        class: "CS303",
+        priority: "medium",
       },
     ]);
   };
 
-  const StatCard = ({ title, value, icon: Icon, color, onClick }) => (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer"
-    >
-      <div className="flex items-center justify-between">
+  const StatCard = ({ title, value, icon: Icon, color, onClick, trend }) => (
+    <div onClick={onClick} className="stat-card-modern cursor-pointer group">
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-2">{value}</p>
+          <p className="stat-title">{title}</p>
+          <p className="stat-value">{value}</p>
+          {trend && <p className="text-sm text-muted mt-1">{trend}</p>}
         </div>
-        <div className={`p-3 rounded-full ${color}`}>
-          <Icon className="h-6 w-6 text-white" />
+        <div
+          className={`p-3 rounded-xl ${color} group-hover:scale-110 transition-transform`}
+        >
+          <Icon className="w-6 h-6 text-white" />
         </div>
       </div>
+    </div>
+  );
+
+  const ClassCard = ({ class: cls }) => (
+    <div className="modern-card hover:shadow-lg transition-all">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-gray-900">{cls.subject}</h3>
+            <span
+              className={`badge ${cls.type === "Lab" ? "badge-purple" : "badge-blue"}`}
+            >
+              {cls.type}
+            </span>
+          </div>
+          <p className="text-sm text-muted">
+            {cls.code} • Sem {cls.semester} • Sec {cls.section}
+          </p>
+        </div>
+        {cls.attendanceMarked ? (
+          <span className="badge badge-green flex items-center gap-1">
+            <CheckCircleIcon className="w-3 h-3" />
+            Done
+          </span>
+        ) : (
+          <span className="badge badge-yellow flex items-center gap-1">
+            <ClockIcon className="w-3 h-3" />
+            Pending
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="flex items-center text-sm text-muted">
+          <ClockIcon className="w-4 h-4 mr-2 text-gray-400" />
+          {cls.time}
+        </div>
+        <div className="flex items-center text-sm text-muted">
+          <AcademicCapIcon className="w-4 h-4 mr-2 text-gray-400" />
+          {cls.students} students
+        </div>
+        <div className="flex items-center text-sm text-muted">
+          <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
+          {cls.room}
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={() =>
+            navigate("/teacher/attendance", { state: { class: cls } })
+          }
+          className="flex-1 btn btn-primary text-sm py-2"
+          disabled={cls.attendanceMarked}
+        >
+          Mark Attendance
+        </button>
+        <button
+          onClick={() => navigate("/teacher/marks")}
+          className="flex-1 btn btn-secondary text-sm py-2"
+        >
+          Enter Marks
+        </button>
+      </div>
+    </div>
+  );
+
+  const ActivityItem = ({ activity }) => (
+    <div
+      className={`flex items-start gap-3 p-3 rounded-xl ${
+        activity.status === "pending" ? "bg-yellow-50" : "bg-gray-50"
+      }`}
+    >
+      <div
+        className={`p-2 rounded-lg ${
+          activity.status === "completed" ? "bg-green-100" : "bg-yellow-100"
+        }`}
+      >
+        {activity.status === "completed" ? (
+          <CheckCircleIcon className="w-4 h-4 text-green-600" />
+        ) : (
+          <ClockIcon className="w-4 h-4 text-yellow-600" />
+        )}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-900">{activity.action}</p>
+        <p className="text-xs text-muted mt-1">{activity.time}</p>
+      </div>
+      {activity.priority === "high" && (
+        <span className="badge badge-red text-xs">Urgent</span>
+      )}
     </div>
   );
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading dashboard...</div>
+        <div className="spinner"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="modern-dashboard">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Teacher Dashboard
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Welcome back, {teacher?.name} • {teacher?.department}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-500 relative">
-                <BellIcon className="h-6 w-6" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
-              </button>
-              <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-semibold">
-                {teacher?.name?.charAt(0) || "T"}
-              </div>
-            </div>
+      <div className="modern-header-clean">
+        <div>
+          <h1>Teacher Dashboard</h1>
+          <p className="flex items-center gap-2 mt-1">
+            <span className="text-muted">Welcome back,</span>
+            <span className="font-semibold text-gray-900">{teacher?.name}</span>
+            <span className="badge badge-purple">{teacher?.designation}</span>
+          </p>
+        </div>
+        <div className="header-actions">
+          <button className="header-icon-button relative">
+            <BellIcon className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center">
+              {recentActivities.filter((a) => a.status === "pending").length}
+            </span>
+          </button>
+          <div className="user-profile">
+            <span className="user-name">{teacher?.name.split(" ")[0]}</span>
+            <div className="user-avatar">{teacher?.name.charAt(0)}</div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Total Classes"
-            value={stats.totalClasses}
-            icon={BookOpenIcon}
-            color="bg-blue-500"
-            onClick={() => navigate("/teacher/classes")}
-          />
-          <StatCard
-            title="Total Students"
-            value={stats.totalStudents}
-            icon={UserGroupIcon}
-            color="bg-green-500"
-            onClick={() => navigate("/teacher/students")}
-          />
-          <StatCard
-            title="Pending Attendance"
-            value={stats.pendingAttendance}
-            icon={CalendarIcon}
-            color="bg-yellow-500"
-            onClick={() => navigate("/teacher/attendance")}
-          />
-          <StatCard
-            title="Pending Marks"
-            value={stats.pendingMarks}
-            icon={ChartBarIcon}
-            color="bg-purple-500"
-            onClick={() => navigate("/teacher/marks")}
-          />
+      {/* Welcome Banner */}
+      <div className="modern-card mb-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-semibold mb-2">
+              Ready for today's classes? 👋
+            </h2>
+            <p className="text-blue-100">
+              You have {todayClasses.filter((c) => !c.attendanceMarked).length}{" "}
+              classes pending
+            </p>
+          </div>
+          <div className="bg-white/20 p-4 rounded-xl">
+            <PresentationChartBarIcon className="w-8 h-8" />
+          </div>
         </div>
+      </div>
 
+      {/* Stats Grid */}
+      <div className="stats-grid mb-6">
+        <StatCard
+          title="Total Classes"
+          value={stats.totalClasses}
+          icon={BookOpenIcon}
+          color="bg-blue-500"
+          trend="This week"
+          onClick={() => navigate("/teacher/classes")}
+        />
+        <StatCard
+          title="Total Students"
+          value={stats.totalStudents}
+          icon={UserGroupIcon}
+          color="bg-green-500"
+          trend="Across all classes"
+          onClick={() => navigate("/teacher/students")}
+        />
+        <StatCard
+          title="Pending Attendance"
+          value={stats.pendingAttendance}
+          icon={CalendarIcon}
+          color="bg-orange-500"
+          trend="Need to mark today"
+          onClick={() => navigate("/teacher/attendance")}
+        />
+        <StatCard
+          title="Pending Marks"
+          value={stats.pendingMarks}
+          icon={ChartBarIcon}
+          color="bg-purple-500"
+          trend="Need to enter"
+          onClick={() => navigate("/teacher/marks")}
+        />
+      </div>
+
+      {/* Main Grid */}
+      <div className="content-grid">
         {/* Today's Classes */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Today's Classes</h2>
-            <div className="space-y-4">
-              {todayClasses.map((cls) => (
-                <div
-                  key={cls.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{cls.subject}</h3>
-                      <p className="text-sm text-gray-600">
-                        {cls.code} • Semester {cls.semester} • Section{" "}
-                        {cls.section}
-                      </p>
-                      <div className="flex items-center mt-2 text-sm text-gray-500">
-                        <ClockIcon className="h-4 w-4 mr-1" />
-                        {cls.time}
-                        <span className="mx-2">•</span>
-                        <span>📍 {cls.room}</span>
-                        <span className="mx-2">•</span>
-                        <AcademicCapIcon className="h-4 w-4 mr-1" />
-                        {cls.students} students
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      {cls.attendanceMarked ? (
-                        <span className="flex items-center text-green-600 text-sm">
-                          <CheckCircleIcon className="h-4 w-4 mr-1" />
-                          Attendance Marked
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() =>
-                            navigate("/teacher/attendance", {
-                              state: { class: cls },
-                            })
-                          }
-                          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-                        >
-                          Mark Attendance
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Today's Classes
+            </h3>
+            <button
+              onClick={() => navigate("/teacher/classes")}
+              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              View All →
+            </button>
           </div>
-
-          {/* Quick Actions & Pending Tasks */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <button
-                  onClick={() => navigate("/teacher/attendance")}
-                  className="w-full text-left p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition"
-                >
-                  <CalendarIcon className="h-5 w-5 text-blue-600 inline mr-2" />
-                  Mark Attendance
-                </button>
-                <button
-                  onClick={() => navigate("/teacher/marks")}
-                  className="w-full text-left p-3 bg-green-50 rounded-lg hover:bg-green-100 transition"
-                >
-                  <ChartBarIcon className="h-5 w-5 text-green-600 inline mr-2" />
-                  Enter Marks
-                </button>
-                <button
-                  onClick={() => navigate("/teacher/classes")}
-                  className="w-full text-left p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition"
-                >
-                  <BookOpenIcon className="h-5 w-5 text-purple-600 inline mr-2" />
-                  View Classes
-                </button>
-                <button
-                  onClick={() => navigate("/teacher/students")}
-                  className="w-full text-left p-3 bg-orange-50 rounded-lg hover:bg-orange-100 transition"
-                >
-                  <UserGroupIcon className="h-5 w-5 text-orange-600 inline mr-2" />
-                  Student List
-                </button>
-              </div>
-            </div>
-
-            {/* Pending Tasks */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Pending Tasks</h2>
-              <div className="space-y-3">
-                {recentActivities
-                  .filter((a) => a.status === "pending")
-                  .map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start space-x-3"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="h-2 w-2 mt-2 rounded-full bg-yellow-500"></div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-900">
-                          {activity.action}
-                        </p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-4">
+            {todayClasses.map((cls) => (
+              <ClassCard key={cls.id} class={cls} />
+            ))}
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <div className="space-y-4">
-            {recentActivities
-              .filter((a) => a.status === "completed")
-              .map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start space-x-3 border-b pb-3"
-                >
-                  <div className="flex-shrink-0">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.action}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="modern-card">
+            <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => navigate("/teacher/attendance")}
+                className="p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition flex flex-col items-center gap-2 group"
+              >
+                <CalendarIcon className="w-6 h-6 text-blue-600 group-hover:scale-110 transition" />
+                <span className="text-sm font-medium text-gray-700">
+                  Attendance
+                </span>
+              </button>
+              <button
+                onClick={() => navigate("/teacher/marks")}
+                className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition flex flex-col items-center gap-2 group"
+              >
+                <ChartBarIcon className="w-6 h-6 text-green-600 group-hover:scale-110 transition" />
+                <span className="text-sm font-medium text-gray-700">Marks</span>
+              </button>
+              <button
+                onClick={() => navigate("/teacher/classes")}
+                className="p-4 bg-purple-50 rounded-xl hover:bg-purple-100 transition flex flex-col items-center gap-2 group"
+              >
+                <BookOpenIcon className="w-6 h-6 text-purple-600 group-hover:scale-110 transition" />
+                <span className="text-sm font-medium text-gray-700">
+                  Classes
+                </span>
+              </button>
+              <button
+                onClick={() => navigate("/teacher/students")}
+                className="p-4 bg-orange-50 rounded-xl hover:bg-orange-100 transition flex flex-col items-center gap-2 group"
+              >
+                <UserGroupIcon className="w-6 h-6 text-orange-600 group-hover:scale-110 transition" />
+                <span className="text-sm font-medium text-gray-700">
+                  Students
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Pending Tasks */}
+          <div className="modern-card">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <ClockIcon className="w-5 h-5 text-orange-500" />
+              Pending Tasks
+            </h3>
+            <div className="space-y-3">
+              {recentActivities
+                .filter((a) => a.status === "pending")
+                .map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="modern-card">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <ArrowTrendingUpIcon className="w-5 h-5 text-green-500" />
+              Recent Activity
+            </h3>
+            <div className="space-y-3">
+              {recentActivities
+                .filter((a) => a.status === "completed")
+                .map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))}
+            </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

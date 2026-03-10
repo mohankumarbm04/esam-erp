@@ -1,0 +1,72 @@
+/* src/components/Button.css */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  gap: 8px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: 1rem;
+}
+
+.btn-full {
+  width: 100%;
+}
+
+.btn-primary {
+  background: #2563EB;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+  background: #F8FAFC;
+  color: #1F2937;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-secondary:hover {
+  background: #F1F5F9;
+}
+
+.btn-success {
+  background: #10B981;
+  color: white;
+}
+
+.btn-success:hover {
+  background: #059669;
+}
+
+.btn-danger {
+  background: #EF4444;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #DC2626;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

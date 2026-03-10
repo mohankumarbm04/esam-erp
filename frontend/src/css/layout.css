@@ -1,0 +1,215 @@
+/* ==========================================================================
+   ESAM-ERP CSS System — layout.css
+   - App shell layout
+   - Sidebar / Navbar structural styles
+   - Main content scaffolding
+   ========================================================================== */
+
+.App {
+  min-height: 100vh;
+}
+
+/* ----- Dashboard Shell ----- */
+.dashboard-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+}
+
+.dashboard-main {
+  min-width: 0;
+  background: var(--bg);
+}
+
+.content {
+  padding: var(--s-6);
+}
+
+/* ----- Cards / Panels base ----- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--s-6);
+  animation: fadeIn 120ms ease-out;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ----- Header wrappers used across pages ----- */
+.modern-dashboard {
+  padding: var(--s-6);
+}
+
+.modern-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* ----- Sticky navbar container ----- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  background: rgba(248, 250, 252, 0.85);
+  border-bottom: 1px solid var(--border);
+}
+
+.dark-mode .topbar {
+  background: rgba(11, 18, 32, 0.80);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+}
+
+/* ----- Sidebar base ----- */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.sidebar.collapsed {
+  width: 84px;
+  padding: var(--s-5) var(--s-3);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.sidebar-link:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.sidebar-link.active {
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.10);
+  border-color: rgba(37, 99, 235, 0.22);
+}
+
+.sidebar-link .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar.collapsed .sidebar-link .label {
+  display: none;
+}
+
+.sidebar-toggle {
+  margin-left: auto;
+}
+
+/* ----- Navbar UI helpers (search + profile) ----- */
+.topbar-search {
+  flex: 1;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.topbar-search input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.topbar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: var(--text-inverse);
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+/* Sidebar slide animation */
+.sidebar-slide {
+  animation: sidebarIn 180ms ease-out;
+}
+
+@keyframes sidebarIn {
+  from {
+    transform: translateX(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

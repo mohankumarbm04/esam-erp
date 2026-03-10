@@ -11,18 +11,24 @@ import {
   CalendarIcon,
   EyeIcon,
   PrinterIcon,
+  ShareIcon,
+  FunnelIcon,
+  ClockIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 
 const Reports = () => {
   const [department, setDepartment] = useState(null);
   const [selectedSem, setSelectedSem] = useState("3");
   const [selectedReport, setSelectedReport] = useState("attendance");
+  const [selectedFormat, setSelectedFormat] = useState("pdf");
   const [generating, setGenerating] = useState(false);
   const [recentReports, setRecentReports] = useState([]);
   const [stats, setStats] = useState({
     teachers: 12,
     students: 180,
     subjects: 24,
+    passPercentage: 87.5,
   });
 
   const navigate = useNavigate();
@@ -31,23 +37,19 @@ const Reports = () => {
   useEffect(() => {
     fetchDepartment();
     fetchRecentReports();
-    fetchStats();
   }, []);
 
   const fetchDepartment = async () => {
-    try {
-      const response = await axios.get(
-        "https://esam-erp.onrender.com/api/hod/department",
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      setDepartment(response.data.department);
-    } catch (error) {
-      console.error("Error fetching department:", error);
-    }
+    setDepartment({
+      name: "Computer Science",
+      code: "CSE",
+      totalTeachers: 12,
+      totalStudents: 180,
+      totalSubjects: 24,
+    });
   };
 
   const fetchRecentReports = async () => {
-    // Mock data - replace with API call
     setRecentReports([
       {
         id: 1,
@@ -55,8 +57,10 @@ const Reports = () => {
         type: "Attendance",
         date: "March 2026",
         size: "245 KB",
-        generatedBy: "Dr. Rajesh",
+        format: "PDF",
+        generatedBy: "Dr. Sharma",
         generatedOn: "2 hours ago",
+        status: "completed",
       },
       {
         id: 2,
@@ -64,8 +68,10 @@ const Reports = () => {
         type: "Student List",
         date: "March 2026",
         size: "189 KB",
+        format: "PDF",
         generatedBy: "Prof. Kumar",
         generatedOn: "Yesterday",
+        status: "completed",
       },
       {
         id: 3,
@@ -73,8 +79,10 @@ const Reports = () => {
         type: "Marks",
         date: "March 2026",
         size: "423 KB",
+        format: "PDF",
         generatedBy: "Dr. Sharma",
         generatedOn: "2 days ago",
+        status: "completed",
       },
       {
         id: 4,
@@ -82,53 +90,32 @@ const Reports = () => {
         type: "Alert",
         date: "March 2026",
         size: "156 KB",
+        format: "PDF",
         generatedBy: "System",
         generatedOn: "3 days ago",
+        status: "warning",
       },
     ]);
   };
 
-  const fetchStats = async () => {
-    try {
-      // This would come from your API
-      setStats({
-        teachers: 12,
-        students: 180,
-        subjects: 24,
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  };
-
   const handleGenerateReport = () => {
     setGenerating(true);
-
-    // Simulate report generation
     setTimeout(() => {
       setGenerating(false);
-      alert(
-        `${getReportTitle()} generated successfully! Check downloads folder.`,
-      );
-
-      // Add to recent reports
       const newReport = {
         id: Date.now(),
         title: `${getReportTitle()} - ${new Date().toLocaleDateString()}`,
-        type:
-          selectedReport === "attendance"
-            ? "Attendance"
-            : selectedReport === "student-list"
-              ? "Student List"
-              : selectedReport === "marks"
-                ? "Marks"
-                : "Department",
-        date: "Just now",
+        type: getReportType(),
+        date: new Date().toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        }),
         size: "~250 KB",
+        format: selectedFormat.toUpperCase(),
         generatedBy: "You",
         generatedOn: "Just now",
+        status: "completed",
       };
-
       setRecentReports([newReport, ...recentReports]);
     }, 2000);
   };
@@ -143,6 +130,8 @@ const Reports = () => {
         return "Marks Statement";
       case "department":
         return "Department Summary";
+      case "transcript":
+        return "Student Transcript";
       case "low-attendance":
         return "Low Attendance Report";
       default:
@@ -150,249 +139,354 @@ const Reports = () => {
     }
   };
 
-  const handleDownload = (report) => {
-    alert(`Downloading ${report.title}...`);
+  const getReportType = () => {
+    switch (selectedReport) {
+      case "attendance":
+        return "Attendance";
+      case "student-list":
+        return "Student List";
+      case "marks":
+        return "Marks";
+      case "department":
+        return "Department";
+      case "transcript":
+        return "Transcript";
+      case "low-attendance":
+        return "Alert";
+      default:
+        return "Report";
+    }
   };
 
-  const handlePreview = (report) => {
-    alert(`Previewing ${report.title}...`);
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
+      case "warning":
+        return <ClockIcon className="w-4 h-4 text-yellow-500" />;
+      default:
+        return null;
+    }
   };
 
-  const ReportCard = ({ title, icon: Icon, color, description, type }) => (
+  const ReportTypeCard = ({ title, icon: Icon, color, description, type }) => (
     <div
       onClick={() => setSelectedReport(type)}
-      className={`bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer border-2 ${
-        selectedReport === type ? "border-blue-500" : "border-transparent"
+      className={`modern-card cursor-pointer transition-all hover:scale-105 ${
+        selectedReport === type ? "ring-2 ring-blue-500" : ""
       }`}
     >
-      <div className="flex items-center mb-4">
-        <div className={`p-3 rounded-full ${color} mr-4`}>
-          <Icon className="h-6 w-6 text-white" />
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-xl ${color}`}>
+          <Icon className="w-6 h-6 text-white" />
         </div>
-        <h3 className="text-lg font-semibold">{title}</h3>
-      </div>
-      <p className="text-gray-600 text-sm mb-4">{description}</p>
-      <div className="flex justify-end">
-        <span className="text-xs text-gray-500">Click to select</span>
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
+          <p className="text-sm text-muted">{description}</p>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="modern-dashboard">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <DocumentTextIcon className="h-8 w-8 mr-3 text-blue-500" />
-            Department Reports
-          </h1>
-          <p className="text-sm text-gray-600 mt-1">
-            {department?.name} ({department?.code}) • Generate and download
-            reports
+      <div className="modern-header-clean">
+        <div>
+          <h1>Department Reports</h1>
+          <p className="flex items-center gap-2 mt-1">
+            <span className="text-muted">{department?.name}</span>
+            <span className="badge badge-blue">{department?.code}</span>
           </p>
         </div>
-      </header>
+        <div className="header-actions">
+          <button className="btn btn-primary">
+            <DocumentTextIcon className="w-5 h-5 mr-2" />
+            Schedule Report
+          </button>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Teachers</p>
-            <p className="text-2xl font-bold">{stats.teachers}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Students</p>
-            <p className="text-2xl font-bold">{stats.students}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <p className="text-sm text-gray-600">Total Subjects</p>
-            <p className="text-2xl font-bold">{stats.subjects}</p>
+      {/* Stats Cards */}
+      <div className="stats-grid mb-6">
+        <div className="stat-card-modern">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="stat-title">Total Teachers</p>
+              <p className="stat-value">{stats.teachers}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+              <UserGroupIcon className="w-6 h-6" />
+            </div>
           </div>
         </div>
 
-        {/* Report Types Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <ReportCard
-            title="Attendance Report"
-            icon={ChartBarIcon}
-            color="bg-blue-500"
-            description="Detailed attendance analysis with percentage and eligibility"
-            type="attendance"
-          />
-          <ReportCard
-            title="Student List"
-            icon={UserGroupIcon}
-            color="bg-green-500"
-            description="Complete list of students with contact details"
-            type="student-list"
-          />
-          <ReportCard
-            title="Marks Statement"
-            icon={AcademicCapIcon}
-            color="bg-purple-500"
-            description="Subject-wise marks and grades"
-            type="marks"
-          />
-          <ReportCard
-            title="Department Summary"
-            icon={DocumentTextIcon}
-            color="bg-orange-500"
-            description="Overall department statistics and performance"
-            type="department"
-          />
-          <ReportCard
-            title="Low Attendance Report"
-            icon={ChartBarIcon}
-            color="bg-red-500"
-            description="Students with attendance below 75%"
-            type="low-attendance"
-          />
-          <ReportCard
-            title="Semester Report"
-            icon={CalendarIcon}
-            color="bg-indigo-500"
-            description="Complete semester performance summary"
-            type="semester"
-          />
-        </div>
-
-        {/* Report Generation Form */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Generate Report</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="stat-card-modern">
+          <div className="flex items-start justify-between">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Report Type
-              </label>
-              <select
-                value={selectedReport}
-                onChange={(e) => setSelectedReport(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="attendance">Attendance Report</option>
-                <option value="student-list">Student List</option>
-                <option value="marks">Marks Statement</option>
-                <option value="department">Department Summary</option>
-                <option value="low-attendance">Low Attendance Report</option>
-                <option value="semester">Semester Report</option>
-              </select>
+              <p className="stat-title">Total Students</p>
+              <p className="stat-value">{stats.students}</p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Semester
-              </label>
-              <select
-                value={selectedSem}
-                onChange={(e) => setSelectedSem(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value="all">All Semesters</option>
-                <option value="1">Semester 1</option>
-                <option value="2">Semester 2</option>
-                <option value="3">Semester 3</option>
-                <option value="4">Semester 4</option>
-                <option value="5">Semester 5</option>
-                <option value="6">Semester 6</option>
-                <option value="7">Semester 7</option>
-                <option value="8">Semester 8</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Format
-              </label>
-              <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
-                <option value="pdf">PDF Document</option>
-                <option value="excel">Excel Spreadsheet</option>
-                <option value="csv">CSV File</option>
-              </select>
+            <div className="p-3 rounded-xl bg-green-50 text-green-600">
+              <AcademicCapIcon className="w-6 h-6" />
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-end space-x-4">
+        <div className="stat-card-modern">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="stat-title">Total Subjects</p>
+              <p className="stat-value">{stats.subjects}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-purple-50 text-purple-600">
+              <ChartBarIcon className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="stat-card-modern">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="stat-title">Pass Percentage</p>
+              <p className="stat-value text-green-600">
+                {stats.passPercentage}%
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-orange-50 text-orange-600">
+              <AcademicCapIcon className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Types Grid */}
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Report Types</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <ReportTypeCard
+          title="Attendance Report"
+          icon={ChartBarIcon}
+          color="bg-blue-500"
+          description="Detailed attendance analysis with percentages"
+          type="attendance"
+        />
+        <ReportTypeCard
+          title="Student List"
+          icon={UserGroupIcon}
+          color="bg-green-500"
+          description="Complete list of students with contact details"
+          type="student-list"
+        />
+        <ReportTypeCard
+          title="Marks Statement"
+          icon={AcademicCapIcon}
+          color="bg-purple-500"
+          description="Subject-wise marks and grades"
+          type="marks"
+        />
+        <ReportTypeCard
+          title="Department Summary"
+          icon={DocumentTextIcon}
+          color="bg-orange-500"
+          description="Overall department statistics"
+          type="department"
+        />
+        <ReportTypeCard
+          title="Student Transcript"
+          icon={CalendarIcon}
+          color="bg-indigo-500"
+          description="Complete academic record"
+          type="transcript"
+        />
+        <ReportTypeCard
+          title="Low Attendance Report"
+          icon={ChartBarIcon}
+          color="bg-red-500"
+          description="Students below 75% attendance"
+          type="low-attendance"
+        />
+      </div>
+
+      {/* Report Generation Form */}
+      <div className="modern-card mb-6">
+        <div className="card-header">
+          <h3 className="card-title">
+            <FunnelIcon className="w-5 h-5" />
+            Generate Report
+          </h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div>
+            <label className="form-label">Report Type</label>
+            <select
+              value={selectedReport}
+              onChange={(e) => setSelectedReport(e.target.value)}
+              className="form-input"
+            >
+              <option value="attendance">Attendance Report</option>
+              <option value="student-list">Student List</option>
+              <option value="marks">Marks Statement</option>
+              <option value="department">Department Summary</option>
+              <option value="transcript">Student Transcript</option>
+              <option value="low-attendance">Low Attendance Report</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="form-label">Semester</label>
+            <select
+              value={selectedSem}
+              onChange={(e) => setSelectedSem(e.target.value)}
+              className="form-input"
+            >
+              <option value="all">All Semesters</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                <option key={sem} value={sem}>
+                  Semester {sem}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="form-label">Format</label>
+            <select
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              className="form-input"
+            >
+              <option value="pdf">PDF Document</option>
+              <option value="excel">Excel Spreadsheet</option>
+              <option value="csv">CSV File</option>
+            </select>
+          </div>
+
+          <div className="flex items-end">
             <button
               onClick={handleGenerateReport}
               disabled={generating}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center"
+              className="btn btn-primary w-full"
             >
               {generating ? (
-                <>Generating...</>
+                <span className="flex items-center justify-center">
+                  <div className="spinner w-4 h-4 mr-2"></div>
+                  Generating...
+                </span>
               ) : (
                 <>
-                  <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                  Generate Report
+                  <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
+                  Generate
                 </>
               )}
             </button>
-
-            <button className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 flex items-center">
-              <PrinterIcon className="h-5 w-5 mr-2" />
-              Print
-            </button>
           </div>
         </div>
+      </div>
 
-        {/* Recent Reports */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b bg-gray-50">
-            <h2 className="text-lg font-semibold">
-              Recently Generated Reports
-            </h2>
-          </div>
+      {/* Recent Reports */}
+      <div className="modern-card">
+        <div className="card-header">
+          <h3 className="card-title">
+            <ClockIcon className="w-5 h-5" />
+            Recently Generated Reports
+          </h3>
+          <span className="text-sm text-muted">
+            {recentReports.length} reports
+          </span>
+        </div>
 
-          <div className="divide-y divide-gray-200">
-            {recentReports.map((report) => (
-              <div
-                key={report.id}
-                className="p-6 flex items-center justify-between hover:bg-gray-50"
-              >
-                <div className="flex items-center">
-                  <DocumentTextIcon className="h-8 w-8 text-gray-400 mr-4" />
-                  <div>
-                    <h3 className="font-semibold">{report.title}</h3>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <span className="mr-4">{report.type}</span>
-                      <span className="mr-4">{report.date}</span>
-                      <span className="mr-4">{report.size}</span>
-                      <span>
-                        by {report.generatedBy} • {report.generatedOn}
-                      </span>
-                    </div>
+        <div className="space-y-3">
+          {recentReports.map((report) => (
+            <div
+              key={report.id}
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition group"
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`p-2 rounded-lg ${
+                    report.type === "Attendance"
+                      ? "bg-blue-100"
+                      : report.type === "Student List"
+                        ? "bg-green-100"
+                        : report.type === "Marks"
+                          ? "bg-purple-100"
+                          : report.type === "Alert"
+                            ? "bg-yellow-100"
+                            : "bg-gray-100"
+                  }`}
+                >
+                  <DocumentTextIcon
+                    className={`w-5 h-5 ${
+                      report.type === "Attendance"
+                        ? "text-blue-600"
+                        : report.type === "Student List"
+                          ? "text-green-600"
+                          : report.type === "Marks"
+                            ? "text-purple-600"
+                            : report.type === "Alert"
+                              ? "text-yellow-600"
+                              : "text-gray-600"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium text-gray-900">
+                      {report.title}
+                    </h4>
+                    {getStatusIcon(report.status)}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-muted mt-1">
+                    <span>{report.type}</span>
+                    <span>•</span>
+                    <span>{report.date}</span>
+                    <span>•</span>
+                    <span>{report.size}</span>
+                    <span>•</span>
+                    <span>{report.format}</span>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handlePreview(report)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
-                    title="Preview"
-                  >
-                    <EyeIcon className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDownload(report)}
-                    className="p-2 text-green-600 hover:bg-green-50 rounded"
-                    title="Download"
-                  >
-                    <ArrowDownTrayIcon className="h-5 w-5" />
-                  </button>
-                </div>
               </div>
-            ))}
-          </div>
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                <button
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                  title="Preview"
+                >
+                  <EyeIcon className="w-5 h-5" />
+                </button>
+                <button
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
+                  title="Download"
+                >
+                  <ArrowDownTrayIcon className="w-5 h-5" />
+                </button>
+                <button
+                  className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                  title="Print"
+                >
+                  <PrinterIcon className="w-5 h-5" />
+                </button>
+                <button
+                  className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg"
+                  title="Share"
+                >
+                  <ShareIcon className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Info Note */}
-        <div className="mt-6 bg-blue-50 rounded-lg p-4">
-          <p className="text-sm text-blue-700">
-            <span className="font-medium">Note:</span> Reports are generated in
-            real-time. Large reports may take a few moments to process.
-          </p>
-        </div>
-      </main>
+      {/* Info Note */}
+      <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+        <p className="text-sm text-blue-700 flex items-center gap-2">
+          <span className="text-lg">📌</span>
+          Reports are generated in real-time. Large reports may take a few
+          moments to process.
+        </p>
+      </div>
     </div>
   );
 };

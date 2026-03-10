@@ -1,6 +1,7 @@
 // pages/parent/Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/axiosConfig";
 import {
   UserGroupIcon,
   CalendarIcon,
@@ -11,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   PhoneIcon,
   EnvelopeIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
 
 const ParentDashboard = () => {
@@ -19,104 +21,66 @@ const ParentDashboard = () => {
   const [selectedChild, setSelectedChild] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const user = JSON.parse(
+    localStorage.getItem("user") || sessionStorage.getItem("user") || "{}",
+  );
 
   useEffect(() => {
-    fetchChildren();
-    fetchAlerts();
-    fetchNotifications();
+    let isMounted = true;
+
+    const load = async () => {
+      if (!isMounted) return;
+      setLoading(true);
+      setError("");
+
+      await Promise.all([fetchChildren(), fetchAlerts(), fetchNotifications()]);
+
+      if (!isMounted) return;
+      setLoading(false);
+    };
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const fetchChildren = async () => {
-    // Mock data - parent has 2 children
-    const mockChildren = [
-      {
-        id: 1,
-        name: "Alice Johnson",
-        usn: "1BI21CS001",
-        department: "Computer Science",
-        semester: 3,
-        section: "A",
-        attendance: 92,
-        sgpa: 8.5,
-        cgpa: 8.2,
-        lastActive: "Today",
-        profileImage: null,
-        recentMarks: [
-          { subject: "CS301", marks: 85 },
-          { subject: "CS302", marks: 78 },
-        ],
-      },
-      {
-        id: 2,
-        name: "Bob Johnson",
-        usn: "1BI22EC005",
-        department: "Electronics",
-        semester: 2,
-        section: "B",
-        attendance: 78,
-        sgpa: 7.8,
-        cgpa: 7.5,
-        lastActive: "Yesterday",
-        profileImage: null,
-        recentMarks: [
-          { subject: "EC201", marks: 72 },
-          { subject: "EC202", marks: 68 },
-        ],
-      },
-    ];
-    setChildren(mockChildren);
-    setSelectedChild(mockChildren[0]);
+    try {
+      const response = await api.get("/parent/children");
+      const nextChildren = response.data.children || [];
+      setChildren(nextChildren);
+      if (nextChildren.length > 0) setSelectedChild(nextChildren[0]);
+    } catch (err) {
+      console.error("Error fetching children:", err);
+      setError("Failed to load children");
+      setChildren([]);
+      setSelectedChild(null);
+    }
   };
 
   const fetchAlerts = async () => {
-    setAlerts([
-      {
-        id: 1,
-        child: "Alice Johnson",
-        type: "attendance",
-        message: "Attendance below 75% in Data Structures",
-        severity: "warning",
-        date: "2 hours ago",
-        actionable: true,
-      },
-      {
-        id: 2,
-        child: "Bob Johnson",
-        type: "marks",
-        message: "New marks published for Mathematics",
-        severity: "info",
-        date: "1 day ago",
-        actionable: false,
-      },
-      {
-        id: 3,
-        child: "Alice Johnson",
-        type: "result",
-        message: "Semester 3 results declared",
-        severity: "success",
-        date: "3 days ago",
-        actionable: true,
-      },
-    ]);
+    try {
+      const response = await api.get("/parent/alerts");
+      setAlerts(response.data.alerts || []);
+    } catch (err) {
+      console.error("Error fetching alerts:", err);
+      setAlerts([]);
+    }
   };
 
   const fetchNotifications = async () => {
-    setNotifications([
-      {
-        id: 1,
-        title: "Parent-Teacher Meeting",
-        message: "PTM scheduled for March 15, 2026",
-        date: "2 days from now",
-        type: "event",
-      },
-      {
-        id: 2,
-        title: "Fee Payment Reminder",
-        message: "Semester fees due by March 20",
-        date: "1 week from now",
-        type: "reminder",
-      },
-    ]);
+    try {
+      const response = await api.get("/parent/notifications");
+      setNotifications(response.data.notifications || []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setNotifications([]);
+    }
   };
 
   const ChildCard = ({ child, selected, onClick }) => (
@@ -137,7 +101,7 @@ const ParentDashboard = () => {
           <p className="text-xs text-gray-600">{child.usn}</p>
           <div className="flex items-center mt-1 text-xs text-gray-500">
             <AcademicCapIcon className="h-3 w-3 mr-1" />
-            Sem {child.semester} • {child.department}
+            {child.department} • Sem {child.semester} • Sec {child.section}
           </div>
         </div>
         {child.attendance < 75 && (
@@ -147,23 +111,18 @@ const ParentDashboard = () => {
     </div>
   );
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle, trend }) => (
-    <div className="bg-white rounded-xl shadow-md p-6">
+  const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
+    <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
           {subtitle && <p className="text-xs text-gray-500 mt-1">{subtitle}</p>}
         </div>
-        <div className={`p-4 rounded-xl ${color} shadow-lg`}>
+        <div className={`p-4 rounded-lg ${color}`}>
           <Icon className="h-6 w-6 text-white" />
         </div>
       </div>
-      {trend && (
-        <div className="mt-3 text-xs text-green-600 flex items-center">
-          <span>↑ {trend}% from last month</span>
-        </div>
-      )}
     </div>
   );
 
@@ -194,77 +153,98 @@ const ParentDashboard = () => {
               </p>
             </div>
           </div>
-          {alert.actionable && (
-            <button className="text-xs bg-white px-2 py-1 rounded border hover:bg-gray-50">
-              View
-            </button>
-          )}
         </div>
       </div>
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-xl">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Parent Portal
+            <h1 className="text-xl font-semibold text-gray-800">
+              Parent Dashboard
             </h1>
 
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                <BellIcon className="h-6 w-6" />
+              <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg relative">
+                <BellIcon className="h-5 w-5" />
                 {alerts.length > 0 && (
-                  <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    {alerts.length}
-                  </span>
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                 )}
               </button>
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center text-white font-semibold">
-                  R
+                <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-semibold">
+                  {user?.name?.charAt(0) || "P"}
                 </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-700">
-                    Robert Johnson
-                  </p>
-                  <p className="text-xs text-gray-500">Parent</p>
-                </div>
+                <span className="text-sm font-medium text-gray-700 hidden md:block">
+                  {user?.name || "Parent"}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-lg p-6 mb-8 text-white">
-          <h2 className="text-2xl font-bold">Welcome back, Mr. Johnson! 👋</h2>
-          <p className="text-purple-100 mt-2">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg shadow-lg p-6 mb-8 text-white">
+          <h2 className="text-2xl font-bold mb-2">
+            Welcome back, {user?.name?.split(" ")[0] || "Parent"}!
+          </h2>
+          <p className="text-purple-100">
             Stay updated with your children's academic progress.
           </p>
         </div>
 
         {/* Children Selection */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4 flex items-center">
-            <UserGroupIcon className="h-5 w-5 mr-2 text-blue-500" />
-            My Children
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {children.map((child) => (
-              <ChildCard
-                key={child.id}
-                child={child}
-                selected={selectedChild?.id === child.id}
-                onClick={() => setSelectedChild(child)}
-              />
-            ))}
+        {children.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8 border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <UserGroupIcon className="h-5 w-5 mr-2 text-purple-500" />
+              My Children
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {children.map((child) => (
+                <ChildCard
+                  key={child.id}
+                  child={child}
+                  selected={selectedChild?.id === child.id}
+                  onClick={() => setSelectedChild(child)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {selectedChild && (
           <>
@@ -274,35 +254,32 @@ const ParentDashboard = () => {
                 title="Attendance"
                 value={`${selectedChild.attendance}%`}
                 icon={CalendarIcon}
-                color="bg-gradient-to-r from-green-500 to-green-600"
+                color="bg-green-500"
                 subtitle={
                   selectedChild.attendance >= 75
                     ? "Meeting requirement"
                     : "Below 75%"
                 }
-                trend={2}
               />
               <StatCard
                 title="Current SGPA"
                 value={selectedChild.sgpa}
                 icon={ChartBarIcon}
-                color="bg-gradient-to-r from-blue-500 to-blue-600"
+                color="bg-blue-500"
                 subtitle={`Semester ${selectedChild.semester}`}
-                trend={0.3}
               />
               <StatCard
                 title="CGPA"
                 value={selectedChild.cgpa}
                 icon={AcademicCapIcon}
-                color="bg-gradient-to-r from-purple-500 to-purple-600"
+                color="bg-purple-500"
                 subtitle="Overall"
-                trend={0.2}
               />
               <StatCard
                 title="Last Active"
                 value={selectedChild.lastActive}
-                icon={UserGroupIcon}
-                color="bg-gradient-to-r from-orange-500 to-orange-600"
+                icon={UserIcon}
+                color="bg-orange-500"
                 subtitle="in system"
               />
             </div>
@@ -315,7 +292,7 @@ const ParentDashboard = () => {
                     state: { child: selectedChild },
                   })
                 }
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition flex items-center group"
+                className="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex items-center group"
               >
                 <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition mr-4">
                   <CalendarIcon className="h-6 w-6 text-blue-600" />
@@ -332,7 +309,7 @@ const ParentDashboard = () => {
                 onClick={() =>
                   navigate("/parent/marks", { state: { child: selectedChild } })
                 }
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition flex items-center group"
+                className="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex items-center group"
               >
                 <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition mr-4">
                   <ChartBarIcon className="h-6 w-6 text-green-600" />
@@ -351,7 +328,7 @@ const ParentDashboard = () => {
                     state: { child: selectedChild },
                   })
                 }
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition flex items-center group"
+                className="bg-white p-6 rounded-lg shadow hover:shadow-md transition border border-gray-100 flex items-center group"
               >
                 <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition mr-4">
                   <DocumentTextIcon className="h-6 w-6 text-purple-600" />
@@ -370,8 +347,8 @@ const ParentDashboard = () => {
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Recent Alerts */}
-              <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-lg font-semibold mb-4 flex items-center">
+              <div className="lg:col-span-2 bg-white rounded-lg shadow p-6 border border-gray-100">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <ExclamationTriangleIcon className="h-5 w-5 mr-2 text-yellow-500" />
                   Recent Alerts
                 </h2>
@@ -393,8 +370,8 @@ const ParentDashboard = () => {
               {/* Contact & Notifications */}
               <div className="space-y-6">
                 {/* Contact Info */}
-                <div className="bg-white rounded-xl shadow-md p-6">
-                  <h2 className="text-lg font-semibold mb-4">
+                <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
                     Contact Information
                   </h2>
                   <div className="space-y-3">
@@ -404,21 +381,25 @@ const ParentDashboard = () => {
                     </div>
                     <div className="flex items-center text-sm">
                       <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-3" />
-                      <span>parent.johnson@family.com</span>
+                      <span>parent@family.com</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <UserIcon className="h-4 w-4 text-gray-400 mr-3" />
+                      <span>Mr. Robert Johnson</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Upcoming Events */}
-                <div className="bg-white rounded-xl shadow-md p-6">
-                  <h2 className="text-lg font-semibold mb-4">
+                <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
                     Upcoming Events
                   </h2>
                   <div className="space-y-3">
                     {notifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className="border-l-4 border-blue-400 pl-3"
+                        className="border-l-4 border-blue-400 pl-3 py-2"
                       >
                         <p className="text-sm font-medium text-gray-900">
                           {notif.title}
@@ -436,6 +417,18 @@ const ParentDashboard = () => {
               </div>
             </div>
           </>
+        )}
+
+        {children.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-100">
+            <UserGroupIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">
+              No children found
+            </h3>
+            <p className="text-gray-500 mt-2">
+              No children are linked to your account yet.
+            </p>
+          </div>
         )}
       </main>
     </div>

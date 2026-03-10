@@ -1,236 +1,350 @@
 // pages/student/Transcript.jsx
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   DocumentTextIcon,
   ArrowDownTrayIcon,
   AcademicCapIcon,
   PrinterIcon,
   ShareIcon,
+  CalendarIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 
 const Transcript = () => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [transcript, setTranscript] = useState(null);
   const [student, setStudent] = useState(null);
+  const [semesters, setSemesters] = useState([]);
+  const [cgpa, setCgpa] = useState(0);
+  const [totalCredits, setTotalCredits] = useState(0);
+  const [earnedCredits, setEarnedCredits] = useState(0);
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchTranscript();
   }, []);
 
   const fetchTranscript = async () => {
-    // Mock data - replace with API call
-    setTimeout(() => {
-      const data = {
-        student: {
-          name: "Alice Johnson",
-          usn: "1BI21CS001",
-          department: "Computer Science",
-          batch: "2021-2025",
-          admissionYear: 2021,
-          dob: "2003-05-15",
-          bloodGroup: "O+",
-          category: "General",
+    try {
+      setLoading(true);
+
+      // Fetch student profile
+      const profileRes = await axios.get(
+        "/api/students/profile/me",
+        {
+          headers: { Authorization: `Bearer ${token}` },
         },
-        semesters: [
-          {
-            sem: 1,
-            sgpa: 8.2,
-            totalCredits: 22,
-            earnedCredits: 22,
-            subjects: [
-              {
-                code: "MA101",
-                name: "Engineering Mathematics I",
-                credits: 4,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "PH102",
-                name: "Engineering Physics",
-                credits: 3,
-                grade: "A+",
-                gp: 9,
-              },
-              {
-                code: "CS101",
-                name: "Programming in C",
-                credits: 4,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "EE103",
-                name: "Basic Electrical Engg",
-                credits: 3,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "ME104",
-                name: "Engineering Mechanics",
-                credits: 4,
-                grade: "B+",
-                gp: 7,
-              },
-              {
-                code: "HS101",
-                name: "Communicative English",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "Lab101",
-                name: "C Programming Lab",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-            ],
-          },
-          {
-            sem: 2,
-            sgpa: 8.5,
-            totalCredits: 24,
-            earnedCredits: 24,
-            subjects: [
-              {
-                code: "MA201",
-                name: "Engineering Mathematics II",
-                credits: 4,
-                grade: "A+",
-                gp: 9,
-              },
-              {
-                code: "CY202",
-                name: "Engineering Chemistry",
-                credits: 3,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "CS202",
-                name: "Data Structures",
-                credits: 4,
-                grade: "A+",
-                gp: 9,
-              },
-              {
-                code: "CS203",
-                name: "Digital Electronics",
-                credits: 3,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "EC204",
-                name: "Basic Electronics",
-                credits: 4,
-                grade: "B+",
-                gp: 7,
-              },
-              {
-                code: "HS102",
-                name: "Environmental Studies",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "Lab202",
-                name: "Data Structures Lab",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "Lab203",
-                name: "Digital Electronics Lab",
-                credits: 2,
-                grade: "A+",
-                gp: 9,
-              },
-            ],
-          },
-          {
-            sem: 3,
-            sgpa: 8.7,
-            totalCredits: 24,
-            earnedCredits: 24,
-            subjects: [
-              {
-                code: "MA301",
-                name: "Discrete Mathematics",
-                credits: 4,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "CS301",
-                name: "Database Management Systems",
-                credits: 4,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "CS302",
-                name: "Object Oriented Programming",
-                credits: 4,
-                grade: "A+",
-                gp: 9,
-              },
-              {
-                code: "CS303",
-                name: "Algorithm Design",
-                credits: 4,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "CS304",
-                name: "Operating Systems",
-                credits: 4,
-                grade: "A",
-                gp: 8,
-              },
-              {
-                code: "HS103",
-                name: "Constitution of India",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-              {
-                code: "Lab301",
-                name: "DBMS Lab",
-                credits: 2,
-                grade: "O",
-                gp: 10,
-              },
-            ],
-          },
-        ],
-        cgpa: 8.5,
-        totalCredits: 70,
-        earnedCredits: 70,
-        overallPercentage: 78.5,
-        classRank: 15,
-        totalStudents: 180,
+      );
+
+      if (profileRes.data.success) {
+        setStudent(profileRes.data.student);
+      }
+
+      // Fetch all marks for transcript
+      const marksRes = await axios.get(
+        "/api/students/marks",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (marksRes.data.success) {
+        processTranscriptData(marksRes.data.marks || []);
+      }
+    } catch (err) {
+      console.error("Error fetching transcript:", err);
+      setError("Failed to load transcript data");
+
+      // Mock data for development
+      const mockStudent = {
+        name: "Alice Johnson",
+        usn: "1BI21CS001",
+        department: { name: "Computer Science", code: "CSE" },
+        batch: "2021-2025",
+        admissionYear: 2021,
+        dob: "2003-05-15",
+        bloodGroup: "O+",
       };
 
-      setTranscript(data);
-      setStudent(data.student);
+      const mockMarks = [
+        // Semester 1
+        {
+          semester: 1,
+          subjectId: {
+            code: "MA101",
+            name: "Engineering Mathematics I",
+            credits: 4,
+          },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 85,
+        },
+        {
+          semester: 1,
+          subjectId: { code: "PH102", name: "Engineering Physics", credits: 3 },
+          grade: "A+",
+          gradePoint: 9,
+          totalMarks: 88,
+        },
+        {
+          semester: 1,
+          subjectId: { code: "CS101", name: "Programming in C", credits: 4 },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 92,
+        },
+        {
+          semester: 1,
+          subjectId: {
+            code: "EE103",
+            name: "Basic Electrical Engg",
+            credits: 3,
+          },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 82,
+        },
+        {
+          semester: 1,
+          subjectId: {
+            code: "ME104",
+            name: "Engineering Mechanics",
+            credits: 4,
+          },
+          grade: "B+",
+          gradePoint: 7,
+          totalMarks: 76,
+        },
+        {
+          semester: 1,
+          subjectId: {
+            code: "HS101",
+            name: "Communicative English",
+            credits: 2,
+          },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 94,
+        },
+        {
+          semester: 1,
+          subjectId: { code: "Lab101", name: "C Programming Lab", credits: 2 },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 95,
+        },
+
+        // Semester 2
+        {
+          semester: 2,
+          subjectId: {
+            code: "MA201",
+            name: "Engineering Mathematics II",
+            credits: 4,
+          },
+          grade: "A+",
+          gradePoint: 9,
+          totalMarks: 89,
+        },
+        {
+          semester: 2,
+          subjectId: {
+            code: "CY202",
+            name: "Engineering Chemistry",
+            credits: 3,
+          },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 84,
+        },
+        {
+          semester: 2,
+          subjectId: { code: "CS202", name: "Data Structures", credits: 4 },
+          grade: "A+",
+          gradePoint: 9,
+          totalMarks: 87,
+        },
+        {
+          semester: 2,
+          subjectId: { code: "CS203", name: "Digital Electronics", credits: 3 },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 83,
+        },
+        {
+          semester: 2,
+          subjectId: { code: "EC204", name: "Basic Electronics", credits: 4 },
+          grade: "B+",
+          gradePoint: 7,
+          totalMarks: 78,
+        },
+        {
+          semester: 2,
+          subjectId: {
+            code: "HS102",
+            name: "Environmental Studies",
+            credits: 2,
+          },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 96,
+        },
+        {
+          semester: 2,
+          subjectId: {
+            code: "Lab202",
+            name: "Data Structures Lab",
+            credits: 2,
+          },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 97,
+        },
+        {
+          semester: 2,
+          subjectId: {
+            code: "Lab203",
+            name: "Digital Electronics Lab",
+            credits: 2,
+          },
+          grade: "A+",
+          gradePoint: 9,
+          totalMarks: 90,
+        },
+
+        // Semester 3
+        {
+          semester: 3,
+          subjectId: {
+            code: "MA301",
+            name: "Discrete Mathematics",
+            credits: 4,
+          },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 85,
+        },
+        {
+          semester: 3,
+          subjectId: {
+            code: "CS301",
+            name: "Database Management Systems",
+            credits: 4,
+          },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 112,
+        },
+        {
+          semester: 3,
+          subjectId: {
+            code: "CS302",
+            name: "Object Oriented Programming",
+            credits: 4,
+          },
+          grade: "A+",
+          gradePoint: 9,
+          totalMarks: 102,
+        },
+        {
+          semester: 3,
+          subjectId: { code: "CS303", name: "Algorithm Design", credits: 4 },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 107,
+        },
+        {
+          semester: 3,
+          subjectId: { code: "CS304", name: "Operating Systems", credits: 4 },
+          grade: "A",
+          gradePoint: 8,
+          totalMarks: 104,
+        },
+        {
+          semester: 3,
+          subjectId: {
+            code: "HS103",
+            name: "Constitution of India",
+            credits: 2,
+          },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 98,
+        },
+        {
+          semester: 3,
+          subjectId: { code: "Lab301", name: "DBMS Lab", credits: 2 },
+          grade: "O",
+          gradePoint: 10,
+          totalMarks: 95,
+        },
+      ];
+
+      setStudent(mockStudent);
+      processTranscriptData(mockMarks);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
-  const handleDownload = (format) => {
-    alert(`Downloading transcript as ${format.toUpperCase()}...`);
-  };
+  const processTranscriptData = (marksData) => {
+    // Group marks by semester
+    const semesterMap = {};
+    let totalPoints = 0;
+    let totalCreditsAll = 0;
+    let earnedCreditsAll = 0;
 
-  const handlePrint = () => {
-    window.print();
+    marksData.forEach((mark) => {
+      const sem = mark.semester;
+      if (!semesterMap[sem]) {
+        semesterMap[sem] = {
+          semester: sem,
+          subjects: [],
+          totalPoints: 0,
+          totalCredits: 0,
+          earnedCredits: 0,
+        };
+      }
+
+      semesterMap[sem].subjects.push(mark);
+
+      if (mark.gradePoint) {
+        semesterMap[sem].totalPoints +=
+          mark.gradePoint * (mark.subjectId?.credits || 0);
+        semesterMap[sem].totalCredits += mark.subjectId?.credits || 0;
+
+        totalPoints += mark.gradePoint * (mark.subjectId?.credits || 0);
+        totalCreditsAll += mark.subjectId?.credits || 0;
+
+        if (mark.grade !== "F") {
+          semesterMap[sem].earnedCredits += mark.subjectId?.credits || 0;
+          earnedCreditsAll += mark.subjectId?.credits || 0;
+        }
+      }
+    });
+
+    // Calculate SGPA for each semester
+    const semestersArray = Object.values(semesterMap)
+      .map((sem) => ({
+        ...sem,
+        sgpa:
+          sem.totalCredits > 0
+            ? (sem.totalPoints / sem.totalCredits).toFixed(2)
+            : 0,
+      }))
+      .sort((a, b) => a.semester - b.semester);
+
+    setSemesters(semestersArray);
+    setCgpa(
+      totalCreditsAll > 0 ? (totalPoints / totalCreditsAll).toFixed(2) : 0,
+    );
+    setTotalCredits(totalCreditsAll);
+    setEarnedCredits(earnedCreditsAll);
   };
 
   const getGradeColor = (grade) => {
@@ -247,50 +361,79 @@ const Transcript = () => {
     return colors[grade] || "bg-gray-100 text-gray-800";
   };
 
+  const handleDownload = (format) => {
+    alert(`Downloading transcript as ${format.toUpperCase()}...`);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    alert("Share options for transcript");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading transcript...</div>
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading transcript...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p className="text-xl">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <DocumentTextIcon className="h-6 w-6 mr-2 text-blue-500" />
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-semibold text-gray-800">
               Academic Transcript
             </h1>
-
-            <div className="mt-4 md:mt-0 flex space-x-3">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => handleDownload("pdf")}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
               >
                 <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
                 PDF
               </button>
               <button
                 onClick={() => handleDownload("excel")}
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
               >
-                <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                <DocumentTextIcon className="h-4 w-4 mr-2" />
                 Excel
               </button>
               <button
                 onClick={handlePrint}
-                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                className="flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm"
               >
                 <PrinterIcon className="h-4 w-4 mr-2" />
                 Print
               </button>
               <button
-                onClick={() => handleDownload("share")}
-                className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                onClick={handleShare}
+                className="flex items-center px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm"
               >
                 <ShareIcon className="h-4 w-4 mr-2" />
                 Share
@@ -300,86 +443,89 @@ const Transcript = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Student Information Card */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6 border border-gray-100">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                {student.name}
+                {student?.name}
               </h2>
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">USN</p>
-                  <p className="text-sm font-semibold">{student.usn}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.usn}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Department</p>
-                  <p className="text-sm font-semibold">{student.department}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.department?.name}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Batch</p>
-                  <p className="text-sm font-semibold">{student.batch}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.batch ||
+                      `${student?.admissionYear}-${student?.admissionYear + 4}`}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Admission Year</p>
-                  <p className="text-sm font-semibold">
-                    {student.admissionYear}
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.admissionYear}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Date of Birth</p>
-                  <p className="text-sm font-semibold">{student.dob}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.dob}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Blood Group</p>
-                  <p className="text-sm font-semibold">{student.bloodGroup}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Category</p>
-                  <p className="text-sm font-semibold">{student.category}</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {student?.bloodGroup || "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Overall Performance Card */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
-              <p className="text-sm opacity-90">CGPA</p>
-              <p className="text-3xl font-bold">{transcript.cgpa}</p>
-              <p className="text-xs mt-2 opacity-90">
-                Class Rank: {transcript.classRank}/{transcript.totalStudents}
-              </p>
+            {/* CGPA Card */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
+              <p className="text-sm opacity-90">Cumulative GPA</p>
+              <p className="text-4xl font-bold mt-2">{cgpa}</p>
+              <p className="text-xs mt-2 opacity-75">out of 10.0</p>
             </div>
           </div>
         </div>
 
         {/* Semesters */}
-        {transcript.semesters.map((sem) => (
+        {semesters.map((sem) => (
           <div
-            key={sem.sem}
-            className="bg-white rounded-xl shadow-md mb-6 overflow-hidden"
+            key={sem.semester}
+            className="bg-white rounded-lg shadow mb-6 overflow-hidden border border-gray-100"
           >
             {/* Semester Header */}
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
+            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold">Semester {sem.sem}</h3>
-                  <p className="text-sm text-gray-600">
-                    Credits: {sem.earnedCredits}/{sem.totalCredits} • SGPA:{" "}
-                    {sem.sgpa}
-                  </p>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Semester {sem.semester}
+                  </h3>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Earned Credits</p>
-                    <p className="text-lg font-semibold text-green-600">
-                      {sem.earnedCredits}
-                    </p>
-                  </div>
+                <div className="flex items-center space-x-6">
                   <div className="text-right">
                     <p className="text-xs text-gray-500">SGPA</p>
                     <p className="text-lg font-semibold text-blue-600">
                       {sem.sgpa}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Credits</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      {sem.earnedCredits}/{sem.totalCredits}
                     </p>
                   </div>
                 </div>
@@ -401,13 +547,13 @@ const Transcript = () => {
                       Credits
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Marks
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Grade
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Grade Point
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
                     </th>
                   </tr>
                 </thead>
@@ -415,13 +561,16 @@ const Transcript = () => {
                   {sem.subjects.map((subject, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {subject.code}
+                        {subject.subjectId?.code}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {subject.name}
+                        {subject.subjectId?.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
-                        {subject.credits}
+                        {subject.subjectId?.credits}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
+                        {subject.totalMarks}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span
@@ -431,12 +580,7 @@ const Transcript = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500">
-                        {subject.gp}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <span className="text-green-600 text-sm">
-                          ✓ Completed
-                        </span>
+                        {subject.gradePoint}
                       </td>
                     </tr>
                   ))}
@@ -447,37 +591,35 @@ const Transcript = () => {
         ))}
 
         {/* Final Summary */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-semibold mb-4">Overall Summary</h3>
+        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Overall Summary
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-600">Total Credits</p>
-              <p className="text-2xl font-bold text-blue-700">
-                {transcript.totalCredits}
-              </p>
+              <p className="text-2xl font-bold text-blue-700">{totalCredits}</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <p className="text-xs text-green-600">Credits Earned</p>
               <p className="text-2xl font-bold text-green-700">
-                {transcript.earnedCredits}
+                {earnedCredits}
               </p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <p className="text-xs text-purple-600">CGPA</p>
-              <p className="text-2xl font-bold text-purple-700">
-                {transcript.cgpa}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-yellow-600">Overall %</p>
-              <p className="text-2xl font-bold text-yellow-700">
-                {transcript.overallPercentage}%
-              </p>
+              <p className="text-2xl font-bold text-purple-700">{cgpa}</p>
             </div>
             <div className="text-center p-4 bg-indigo-50 rounded-lg">
-              <p className="text-xs text-indigo-600">Class Rank</p>
+              <p className="text-xs text-indigo-600">Semesters</p>
               <p className="text-2xl font-bold text-indigo-700">
-                {transcript.classRank}/{transcript.totalStudents}
+                {semesters.length}
+              </p>
+            </div>
+            <div className="text-center p-4 bg-orange-50 rounded-lg">
+              <p className="text-xs text-orange-600">Subjects</p>
+              <p className="text-2xl font-bold text-orange-700">
+                {semesters.reduce((acc, sem) => acc + sem.subjects.length, 0)}
               </p>
             </div>
           </div>

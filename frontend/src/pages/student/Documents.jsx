@@ -1,5 +1,7 @@
 // pages/student/Documents.jsx
 import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   DocumentTextIcon,
   ArrowDownTrayIcon,
@@ -8,9 +10,9 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  FolderIcon,
   PhotoIcon,
   DocumentIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 
 const Documents = () => {
@@ -18,23 +20,43 @@ const Documents = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [stats, setStats] = useState({
     total: 0,
     verified: 0,
     pending: 0,
     rejected: 0,
-    storageUsed: "2.4 MB",
+    storageUsed: "0 MB",
     storageLimit: "50 MB",
   });
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchDocuments();
   }, []);
 
   const fetchDocuments = async () => {
-    // Mock data - replace with API call
-    setTimeout(() => {
-      const data = [
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        "http://localhost:5000/api/students/documents",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.data.success) {
+        setDocuments(response.data.documents || []);
+        calculateStats(response.data.documents || []);
+      }
+    } catch (err) {
+      console.error("Error fetching documents:", err);
+
+      // Mock data for development
+      const mockDocuments = [
         {
           id: 1,
           name: "10th Marks Card",
@@ -134,48 +156,87 @@ const Documents = () => {
         },
       ];
 
-      setDocuments(data);
-
-      const verified = data.filter((d) => d.status === "verified").length;
-      const pending = data.filter((d) => d.status === "pending").length;
-      const rejected = data.filter((d) => d.status === "rejected").length;
-
-      setStats({
-        total: data.length,
-        verified,
-        pending,
-        rejected,
-        storageUsed: "2.4 MB",
-        storageLimit: "50 MB",
-      });
-
+      setDocuments(mockDocuments);
+      calculateStats(mockDocuments);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
+  };
+
+  const calculateStats = (docs) => {
+    const verified = docs.filter((d) => d.status === "verified").length;
+    const pending = docs.filter((d) => d.status === "pending").length;
+    const rejected = docs.filter((d) => d.status === "rejected").length;
+
+    // Calculate total size (mock)
+    const totalSizeMB = 2.4; // This would come from API
+
+    setStats({
+      total: docs.length,
+      verified,
+      pending,
+      rejected,
+      storageUsed: `${totalSizeMB} MB`,
+      storageLimit: "50 MB",
+    });
   };
 
   const handleUpload = () => {
     setUploading(true);
+    // Simulate file upload
     setTimeout(() => {
       setUploading(false);
-      alert(
+      setSuccess(
         "Document uploaded successfully! It will be verified within 2-3 working days.",
       );
+
+      // Add mock new document
+      const newDoc = {
+        id: Date.now(),
+        name: "New Document",
+        type: "PDF",
+        category: "academic",
+        size: "150 KB",
+        uploadedAt: new Date().toISOString().split("T")[0],
+        status: "pending",
+        url: "#",
+        icon: "📄",
+      };
+
+      setDocuments([newDoc, ...documents]);
+      calculateStats([newDoc, ...documents]);
+
+      setTimeout(() => setSuccess(""), 3000);
     }, 2000);
   };
 
+  const handleDelete = async (docId) => {
+    if (!window.confirm("Are you sure you want to delete this document?"))
+      return;
+
+    try {
+      // API call would go here
+      // await axios.delete(`http://localhost:5000/api/students/documents/${docId}`, {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
+
+      const updatedDocs = documents.filter((d) => d.id !== docId);
+      setDocuments(updatedDocs);
+      calculateStats(updatedDocs);
+      setSuccess("Document deleted successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError("Failed to delete document");
+      setTimeout(() => setError(""), 3000);
+    }
+  };
+
   const handleView = (doc) => {
-    alert(`Viewing ${doc.name}`);
+    window.open(doc.url, "_blank");
   };
 
   const handleDownload = (doc) => {
-    alert(`Downloading ${doc.name}`);
-  };
-
-  const handleDelete = (doc) => {
-    if (window.confirm(`Are you sure you want to delete ${doc.name}?`)) {
-      setDocuments(documents.filter((d) => d.id !== doc.id));
-      alert("Document deleted successfully!");
-    }
+    alert(`Downloading ${doc.name}...`);
   };
 
   const getStatusIcon = (status) => {
@@ -207,13 +268,13 @@ const Documents = () => {
   const getFileIcon = (type) => {
     if (type === "PDF")
       return <DocumentTextIcon className="h-8 w-8 text-red-500" />;
-    if (type === "JPG" || type === "PNG")
+    if (type === "JPG" || type === "PNG" || type === "JPEG")
       return <PhotoIcon className="h-8 w-8 text-blue-500" />;
     return <DocumentIcon className="h-8 w-8 text-gray-500" />;
   };
 
   const categories = [
-    { id: "all", name: "All Documents", icon: FolderIcon },
+    { id: "all", name: "All Documents", icon: DocumentTextIcon },
     { id: "academic", name: "Academic", icon: DocumentTextIcon },
     { id: "identity", name: "Identity", icon: DocumentIcon },
     { id: "personal", name: "Personal", icon: PhotoIcon },
@@ -225,129 +286,128 @@ const Documents = () => {
       ? documents
       : documents.filter((d) => d.category === selectedCategory);
 
-  const CategoryCard = ({ category, selected, onClick }) => {
-    const Icon = category.icon;
-    const count =
-      category.id === "all"
-        ? documents.length
-        : documents.filter((d) => d.category === category.id).length;
-
-    return (
-      <button
-        onClick={onClick}
-        className={`flex items-center p-3 rounded-lg transition ${
-          selected
-            ? "bg-blue-50 border-2 border-blue-500"
-            : "bg-white border border-gray-200 hover:border-blue-300"
-        }`}
-      >
-        <Icon
-          className={`h-5 w-5 mr-2 ${selected ? "text-blue-600" : "text-gray-500"}`}
-        />
-        <span
-          className={`text-sm font-medium ${selected ? "text-blue-600" : "text-gray-700"}`}
-        >
-          {category.name}
-        </span>
-        <span
-          className={`ml-auto text-xs px-2 py-1 rounded-full ${
-            selected ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {count}
-        </span>
-      </button>
-    );
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading documents...</div>
+        <div className="text-center">
+          <div className="spinner"></div>
+          <p className="mt-4 text-gray-600">Loading documents...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <DocumentTextIcon className="h-8 w-8 mr-3 text-blue-500" />
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <h1 className="text-xl font-semibold text-gray-800">
               My Documents
             </h1>
             <button
               onClick={handleUpload}
               disabled={uploading}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm disabled:opacity-50"
             >
-              <CloudArrowUpIcon className="h-5 w-5 mr-2" />
+              <CloudArrowUpIcon className="h-4 w-4 mr-2" />
               {uploading ? "Uploading..." : "Upload New"}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <p className="text-sm text-gray-600">Total Documents</p>
-            <p className="text-2xl font-bold">{stats.total}</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success/Error Messages */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+            {error}
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        )}
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+            {success}
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+            <p className="text-sm text-gray-600">Total Documents</p>
+            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
             <p className="text-sm text-gray-600">Verified</p>
             <p className="text-2xl font-bold text-green-600">
               {stats.verified}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+          <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
             <p className="text-sm text-gray-600">Pending</p>
             <p className="text-2xl font-bold text-yellow-600">
               {stats.pending}
             </p>
           </div>
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500">
+          <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
             <p className="text-sm text-gray-600">Rejected</p>
             <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
           </div>
+          <div className="bg-white rounded-lg shadow p-4 border border-gray-100">
+            <p className="text-sm text-gray-600">Storage</p>
+            <p className="text-2xl font-bold text-blue-600">
+              {stats.storageUsed}
+            </p>
+            <p className="text-xs text-gray-500">of {stats.storageLimit}</p>
+          </div>
         </div>
 
-        {/* Storage Card */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-md p-6 mb-8 text-white">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm opacity-90">Storage Usage</p>
-              <p className="text-2xl font-bold">
-                {stats.storageUsed} / {stats.storageLimit}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm opacity-90">Used</p>
-              <p className="text-2xl font-bold">
-                {Math.round((2.4 / 50) * 100)}%
-              </p>
-            </div>
+        {/* Storage Progress Bar */}
+        <div className="bg-white rounded-lg shadow p-4 mb-6 border border-gray-100">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-700">
+              Storage Usage
+            </span>
+            <span className="text-sm text-gray-600">
+              {((parseFloat(stats.storageUsed) / 50) * 100).toFixed(0)}% used
+            </span>
           </div>
-          <div className="mt-4 w-full bg-white/20 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div
-              className="bg-white rounded-full h-2"
-              style={{ width: `${(2.4 / 50) * 100}%` }}
+              className="bg-blue-600 rounded-full h-2.5"
+              style={{
+                width: `${(parseFloat(stats.storageUsed) / 50) * 100}%`,
+              }}
             ></div>
           </div>
         </div>
 
         {/* Categories */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           {categories.map((category) => (
-            <CategoryCard
+            <button
               key={category.id}
-              category={category}
-              selected={selectedCategory === category.id}
               onClick={() => setSelectedCategory(category.id)}
-            />
+              className={`flex items-center px-4 py-2 rounded-lg transition ${
+                selectedCategory === category.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+              }`}
+            >
+              <category.icon className="h-4 w-4 mr-2" />
+              {category.name}
+              <span
+                className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                  selectedCategory === category.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                {category.id === "all"
+                  ? documents.length
+                  : documents.filter((d) => d.category === category.id).length}
+              </span>
+            </button>
           ))}
         </div>
 
@@ -356,10 +416,10 @@ const Documents = () => {
           {filteredDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition"
+              className="bg-white rounded-lg shadow overflow-hidden border border-gray-100 hover:shadow-md transition"
             >
               {/* Document Header */}
-              <div className="p-4 border-b">
+              <div className="p-4 border-b border-gray-100">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center">
                     {getFileIcon(doc.type)}
@@ -368,7 +428,8 @@ const Documents = () => {
                         {doc.name}
                       </h3>
                       <p className="text-xs text-gray-500">
-                        {doc.type} • {doc.size} • {doc.uploadedAt}
+                        {doc.type} • {doc.size} •{" "}
+                        {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -405,31 +466,34 @@ const Documents = () => {
                       <p className="text-xs text-red-600 mt-1">{doc.remarks}</p>
                     )}
                   </div>
+                  <span className="text-xs px-2 py-1 bg-gray-200 rounded-full">
+                    {doc.category}
+                  </span>
                 </div>
               </div>
 
               {/* Document Actions */}
-              <div className="p-4 border-t flex justify-end space-x-2">
+              <div className="p-4 border-t border-gray-100 flex justify-end space-x-2">
                 <button
                   onClick={() => handleView(doc)}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                   title="View"
                 >
                   <EyeIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => handleDownload(doc)}
-                  className="p-2 text-green-600 hover:bg-green-50 rounded"
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
                   title="Download"
                 >
                   <ArrowDownTrayIcon className="h-5 w-5" />
                 </button>
                 <button
-                  onClick={() => handleDelete(doc)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded"
+                  onClick={() => handleDelete(doc.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
                   title="Delete"
                 >
-                  <XCircleIcon className="h-5 w-5" />
+                  <TrashIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -437,13 +501,15 @@ const Documents = () => {
         </div>
 
         {filteredDocuments.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl shadow-md">
-            <DocumentTextIcon className="h-12 w-12 mx-auto text-gray-400" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
+          <div className="text-center py-12 bg-white rounded-lg shadow border border-gray-100">
+            <DocumentTextIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">
               No documents found
             </h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Upload your first document to get started.
+            <p className="text-gray-500 mt-2">
+              {selectedCategory !== "all"
+                ? "No documents in this category"
+                : "Upload your first document to get started"}
             </p>
             <button
               onClick={handleUpload}
@@ -456,7 +522,7 @@ const Documents = () => {
         )}
 
         {/* Guidelines */}
-        <div className="mt-6 bg-blue-50 rounded-xl p-4">
+        <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
           <h3 className="text-sm font-medium text-blue-800 mb-2">
             📋 Document Upload Guidelines
           </h3>

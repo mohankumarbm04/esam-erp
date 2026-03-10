@@ -1,0 +1,19 @@
+/* src/styles/charts.css */
+.chart-container {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1F2937;
+  margin-bottom: 15px;
+}
+
+.chart-wrapper {
+  width: 100%;
+  position: relative;
+}

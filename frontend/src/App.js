@@ -1,4 +1,6 @@
 // frontend/src/App.js
+import Register from "./pages/auth/Register";
+import NotFound from "./pages/NotFound";
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -18,6 +20,9 @@ import Students from "./pages/admin/Students";
 import Subjects from "./pages/admin/Subjects";
 import Attendance from "./pages/admin/Attendance";
 import Reports from "./pages/admin/Reports";
+import HODs from "./pages/admin/HODs";
+import Settings from "./pages/admin/Settings";
+import Fees from "./pages/admin/Fees";
 
 // HOD Pages
 import HODDashboard from "./pages/hod/Dashboard";
@@ -46,13 +51,30 @@ import ChildAttendance from "./pages/parent/ChildAttendance";
 import ChildMarks from "./pages/parent/ChildMarks";
 import ChildReports from "./pages/parent/ChildReports";
 
-// Protected Route Component
-const ProtectedRoute = ({ children }) => {
+// Protected Route Component with Role-Based Access
+const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const [hasToken, setHasToken] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // Check both localStorage and sessionStorage
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
+    const userStr =
+      localStorage.getItem("user") || sessionStorage.getItem("user");
+
     console.log("🔍 ProtectedRoute - token exists:", !!token);
+
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUserRole(user.role);
+        console.log("🔍 User role:", user.role);
+      } catch (e) {
+        console.error("Error parsing user:", e);
+      }
+    }
+
     setHasToken(!!token);
   }, []);
 
@@ -69,7 +91,23 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
 
-  console.log("🟢 Token found - rendering protected content");
+  // If specific roles are required, check them
+  if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    console.log(
+      `🔴 Role ${userRole} not allowed. Required: ${allowedRoles.join(", ")}`,
+    );
+
+    // Redirect to appropriate dashboard based on role
+    if (userRole === "admin") return <Navigate to="/admin/dashboard" />;
+    if (userRole === "hod") return <Navigate to="/hod/dashboard" />;
+    if (userRole === "teacher") return <Navigate to="/teacher/dashboard" />;
+    if (userRole === "student") return <Navigate to="/student/dashboard" />;
+    if (userRole === "parent") return <Navigate to="/parent/dashboard" />;
+
+    return <Navigate to="/login" />;
+  }
+
+  console.log("🟢 Access granted");
   return children;
 };
 
@@ -80,13 +118,14 @@ function App() {
         <Routes>
           {/* ===== PUBLIC ROUTES ===== */}
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/" element={<Navigate to="/login" />} />
 
-          {/* ===== ADMIN ROUTES ===== */}
+          {/* ===== ADMIN ROUTES ===== (only admin) */}
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -94,7 +133,7 @@ function App() {
           <Route
             path="/admin/departments"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Departments />
               </ProtectedRoute>
             }
@@ -102,15 +141,23 @@ function App() {
           <Route
             path="/admin/teachers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Teachers />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/hods"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <HODs />
               </ProtectedRoute>
             }
           />
           <Route
             path="/admin/students"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Students />
               </ProtectedRoute>
             }
@@ -118,7 +165,7 @@ function App() {
           <Route
             path="/admin/subjects"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Subjects />
               </ProtectedRoute>
             }
@@ -126,7 +173,7 @@ function App() {
           <Route
             path="/admin/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Attendance />
               </ProtectedRoute>
             }
@@ -134,17 +181,33 @@ function App() {
           <Route
             path="/admin/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <Reports />
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/fees"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Fees />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* ===== HOD ROUTES ===== */}
+          {/* ===== HOD ROUTES ===== (admin or hod) */}
           <Route
             path="/hod/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod"]}>
                 <HODDashboard />
               </ProtectedRoute>
             }
@@ -152,7 +215,7 @@ function App() {
           <Route
             path="/hod/teachers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod"]}>
                 <HODTeachers />
               </ProtectedRoute>
             }
@@ -160,7 +223,7 @@ function App() {
           <Route
             path="/hod/students"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod"]}>
                 <HODStudents />
               </ProtectedRoute>
             }
@@ -168,7 +231,7 @@ function App() {
           <Route
             path="/hod/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod"]}>
                 <HODAttendance />
               </ProtectedRoute>
             }
@@ -176,17 +239,17 @@ function App() {
           <Route
             path="/hod/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod"]}>
                 <HODReports />
               </ProtectedRoute>
             }
           />
 
-          {/* ===== TEACHER ROUTES ===== */}
+          {/* ===== TEACHER ROUTES ===== (admin, hod, or teacher) */}
           <Route
             path="/teacher/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod", "teacher"]}>
                 <TeacherDashboard />
               </ProtectedRoute>
             }
@@ -194,7 +257,7 @@ function App() {
           <Route
             path="/teacher/classes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod", "teacher"]}>
                 <TeacherMyClasses />
               </ProtectedRoute>
             }
@@ -202,7 +265,7 @@ function App() {
           <Route
             path="/teacher/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod", "teacher"]}>
                 <TeacherMarkAttendance />
               </ProtectedRoute>
             }
@@ -210,7 +273,7 @@ function App() {
           <Route
             path="/teacher/marks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod", "teacher"]}>
                 <TeacherEnterMarks />
               </ProtectedRoute>
             }
@@ -218,17 +281,19 @@ function App() {
           <Route
             path="/teacher/students"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "hod", "teacher"]}>
                 <TeacherStudents />
               </ProtectedRoute>
             }
           />
 
-          {/* ===== STUDENT ROUTES ===== */}
+          {/* ===== STUDENT ROUTES ===== (admin, hod, teacher, or student) */}
           <Route
             path="/student/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "student"]}
+              >
                 <StudentDashboard />
               </ProtectedRoute>
             }
@@ -236,7 +301,9 @@ function App() {
           <Route
             path="/student/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "student"]}
+              >
                 <StudentAttendance />
               </ProtectedRoute>
             }
@@ -244,7 +311,9 @@ function App() {
           <Route
             path="/student/marks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "student"]}
+              >
                 <StudentMarks />
               </ProtectedRoute>
             }
@@ -252,7 +321,9 @@ function App() {
           <Route
             path="/student/transcript"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "student"]}
+              >
                 <StudentTranscript />
               </ProtectedRoute>
             }
@@ -260,17 +331,21 @@ function App() {
           <Route
             path="/student/documents"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "student"]}
+              >
                 <StudentDocuments />
               </ProtectedRoute>
             }
           />
 
-          {/* ===== PARENT ROUTES ===== */}
+          {/* ===== PARENT ROUTES ===== (admin, hod, teacher, or parent) */}
           <Route
             path="/parent/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "parent"]}
+              >
                 <ParentDashboard />
               </ProtectedRoute>
             }
@@ -278,7 +353,9 @@ function App() {
           <Route
             path="/parent/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "parent"]}
+              >
                 <ChildAttendance />
               </ProtectedRoute>
             }
@@ -286,7 +363,9 @@ function App() {
           <Route
             path="/parent/marks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "parent"]}
+              >
                 <ChildMarks />
               </ProtectedRoute>
             }
@@ -294,14 +373,16 @@ function App() {
           <Route
             path="/parent/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute
+                allowedRoles={["admin", "hod", "teacher", "parent"]}
+              >
                 <ChildReports />
               </ProtectedRoute>
             }
           />
 
-          {/* ===== CATCH ALL ===== */}
-          <Route path="*" element={<Navigate to="/login" />} />
+          {/* ===== CATCH ALL - MUST BE LAST ===== */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
